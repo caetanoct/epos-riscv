@@ -64,8 +64,15 @@ public:
         public:
             Page_Table() {}
 
-            // todo:
-            void remap(const RV32_Flags & flags) {}
+            void remap(const RV32_Flags & flags) {
+                for (int i = 0; i < 1024; ++i) {
+                    unsigned int pte = (((unsigned)this - Traits<Machine>::PAGE_TABLES) >> 12 ) -1;
+                    pte = pte << 20;
+                    pte += ((i) << 10);
+                    pte = pte | flags;
+                    ptes[i] = pte;
+                } 
+            }
     };
 
     // Chunk (for Segment)
