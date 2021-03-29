@@ -20,7 +20,11 @@ void MMU::init()
     // with allocations (from the end) of the first section taking place first
     free(&_end, pages(Memory_Map::MEM_TOP + 1 - Traits<Machine>::STACK_SIZE * Traits<Machine>::CPUS - reinterpret_cast<unsigned int>(&_end)));
     free(Memory_Map::MEM_TOP + 1 - Traits<Machine>::STACK_SIZE * Traits<Machine>::CPUS, pages(Traits<Machine>::STACK_SIZE * Traits<Machine>::CPUS));
+
+    // Remember the master page directory (created during SETUP)
+    _master = reinterpret_cast<Page_Directory *>(CPU::pdp());
 }
+
 
 __END_SYS
 

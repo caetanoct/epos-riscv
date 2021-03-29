@@ -23,23 +23,61 @@ private:
 
 public:
     // Page Flags
-    typedef MMU_Common<0, 0, 0>::Flags RV32_Flags;
+    class RV32_Flags {
+        private: 
+            unsigned int _flags;
+
+        public:
+            enum {
+                VALID   = 1 << 0,
+                READ    = 1 << 1,
+                WRITE   = 1 << 2,
+                EXEC    = 1 << 3,
+                ACCESSED = 1 << 6,
+                DIRTY   = 1 << 7,
+                RW      = READ | WRITE, // POSSIVELMENTE INCORRETO
+                SYS     = VALID | READ | WRITE | EXEC,
+                USR     = VALID | READ | WRITE | EXEC,
+            };
+        RV32_Flags() {}
+        RV32_Flags(const RV32_Flags & f): _flags(f) {}
+        RV32_Flags(unsigned int f): _flags(f) {}
+        RV32_Flags(const Flags & f): _flags(VALID | 
+            ((f & Flags::RW) ? READ : 0) |
+            ((f & Flags::USR) ? USR : 0)
+        ) {}
+
+        operator unsigned int() const { return _flags; }
+
+    };
 
     // Page_Table
-    class Page_Table {};
+    class Page_Table {
+        friend class Setup_SifiveE;
+        
+        private:
+            typedef unsigned int PTE;
+            PTE ptes[1024];
+        
+        public:
+            Page_Table() {}
+
+            // todo:
+            void remap(const RV32_Flags & flags) {}
+    };
 
     // Chunk (for Segment)
     class Chunk
     {
     public:
         Chunk() {}
-        Chunk(unsigned int bytes, Flags flags): _phy_addr(alloc(bytes)), _bytes(bytes), _flags(flags) {}
-        Chunk(Phy_Addr phy_addr, unsigned int bytes, Flags flags): _phy_addr(phy_addr), _bytes(bytes), _flags(flags) {}
+        Chunk(unsigned int bytes, RV32_Flags flags): _phy_addr(alloc(bytes)), _bytes(bytes), _flags(flags) {}
+        Chunk(Phy_Addr phy_addr, unsigned int bytes, RV32_Flags flags): _phy_addr(phy_addr), _bytes(bytes), _flags(flags) {}
 
         ~Chunk() { free(_phy_addr, _bytes); }
 
         unsigned int pts() const { return 0; }
-        Flags flags() const { return _flags; }
+        RV32_Flags flags() const { return _flags; }
         Page_Table * pt() const { return 0; }
         unsigned int size() const { return _bytes; }
         Phy_Addr phy_address() const { return _phy_addr; } // always CT
@@ -145,6 +183,7 @@ private:
 
 private:
     static List _free;
+    static Page_Directory * _master;
 };
 
 __END_SYS

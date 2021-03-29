@@ -34,7 +34,9 @@ public:
         SPIE            = 1 << 5,      // Supervisor Previous Interrupts Enabled
         MPIE            = 1 << 7,      // Machine Previous Interrupts Enabled
         MPP             = 3 << 11,     // Machine Previous Privilege
+        MPP_S           = 1 << 1,        // Macgube previous Privilege=Supervisor
         SPP             = 3 << 12,     // Supervisor Previous Privilege
+        SPP_S             = 1 << 8,     // Supervisor Previous Privilege
         MPRV            = 1 << 17,     // Memory Priviledge
         TVM             = 1 << 20      // Trap Virtual Memory //not allow MMU
     };
@@ -170,6 +172,16 @@ public:
     static Reg32 flags() { return mstatus(); }
     static void flags(const Flags st) { mstatus(st); }
 
+    static Reg32 tp() {
+        Reg32 value;
+        ASM("mv %0, tp" : "=r"(value) :);
+        return value;
+    }
+
+    static void tp(const Reg32 & tp) {
+        ASM("mv tp, %0":  : "r"(tp) :);
+    }
+
     static Reg32 sp() {
         Reg32 value;
         ASM("mv %0, sp" : "=r"(value) :);
@@ -247,13 +259,29 @@ public:
     static void halt() { ASM("wfi"); }
 
     static unsigned int id() {
+        // !SMODE
+        // return tp
+        return 0;
+    }
+
+    static unsigned int mhartid() {
         int id;
-        ASM("csrr %0, mhartid" : "=r"(id) : : "memory", "cc");
+        ASM("csrr %0, mhartid": "=r"(id) : : "memory", "cc");
         return id & 0x3;
     }
 
+    // STATUS CONTROL REGISTERS
+
     static void mstatus(Reg value) {
         ASM("csrs mstatus, %0" : : "r"(value) : "cc");
+    }
+
+    static void mstatus_write(Reg value) {
+        ASM("csrw mstatus, %0" : : "r"(value) : "cc");
+    }
+
+    static void mstatus_clear(Reg value) {
+        ASM("csrc mstatus, %0" : : "r"(value) : "cc");
     }
 
     static Reg mstatus() {
@@ -261,6 +289,28 @@ public:
         ASM("csrr %0, mstatus" : "=r"(value) : : );
         return value;
     }
+    
+    static Reg sstatus() {
+        Reg value;
+        ASM("csrr %0, sstatus" : "=r"(value) : : );
+        return value;
+    }
+
+    static Reg rdtime() {
+        Reg value;
+        ASM("rdtime %0" : "=r"(value) : : );
+        return value;
+    }
+
+    // EXCEPTIONS
+
+    static void mepc(Reg value) {
+        ASM("csrw mepc, %0" : : "r"(value) : "cc");
+    }
+
+    static void mtvec(Reg value) {
+        ASM("csrw mtvec, %0" : : "r"(value) : "cc");
+    }   
 
     static void mie(Reg value) {
         ASM("csrs mie, %0" : : "r"(value) : "cc");
@@ -269,17 +319,95 @@ public:
     static void mie_clear(Reg value) {
         ASM("csrc mie, %0" : : "r"(value) : "cc");
     }
+    
+    static void mie_write(Reg value) {
+        ASM("csrw mie, %0" : : "r"(value) : "cc");
+    }
 
     static Reg mie() {
         Reg value;
         ASM("csrr %0, mie" : "=r"(value) : : );
         return value;
     }
+    
+    static void mip(Reg value) {
+        ASM("csrs mip, %0" : : "r"(value) : "cc");
+    }
+
+    static void mip_write(Reg value) {
+        ASM("csrw mip, %0" : : "r"(value) : "cc");
+    }
+
+    static void mip_clear(Reg value) {
+        ASM("csrc mip, %0" : : "r"(value) : "cc");
+    }
 
     static Reg mcause() {
         Reg value;
         ASM("csrr %0, mcause" : "=r"(value) : : );
         return value;
+    }
+
+    static Reg scause() {
+        Reg value;
+        ASM("csrr %0, scause" : "=r"(value) : : );
+        return value;
+    }
+
+    // SUPERVISOR MODE
+    
+    static void satp(Reg value) {
+        ASM("csrw satp, %0" : : "r"(value) : "cc");
+    }
+    
+    static void satp_write(Reg value) {
+        ASM("csrw satp, %0" : : "r"(value) : "cc");
+    }
+    
+    static void mideleg_write(Reg value) {
+        ASM("csrw mideleg, %0" : : "r"(value) : "cc");
+    }
+
+    static void medeleg_write(Reg value) {
+        ASM("csrw medeleg, %0" : : "r"(value) : "cc");
+    }
+
+    static void sstatus_write(Reg value) {
+        ASM("csrw sstatus, %0" : : "r"(value) : "cc");
+    }
+
+    static void sie(Reg value) {
+        ASM("csrs sie, %0" : : "r"(value) : "cc");
+    }
+
+    static void sie_write(Reg value) {
+        ASM("csrw sie, %0" : : "r"(value) : "cc");
+    }
+
+    static void sie_clear(Reg value) {
+        ASM("csrc sie, %0" : : "r"(value) : "cc");
+    }
+
+    static Reg sie() {
+        Reg value;
+        ASM("csrr %0, sie" : "=r"(value) : : );
+        return value;
+    }
+
+    static void sip(Reg value) {
+        ASM("csrs sip, %0" : : "r"(value) : "cc");
+    }
+
+    static void sip_clear(Reg value) {
+        ASM("csrc sip, %0" : : "r"(value) : "cc");
+    }
+
+    static void stvec_write(Reg value) {
+        ASM("csrw stvec, %0" : : "r"(value) : "cc");
+    }
+
+    static void sepc_write(Reg value) {
+        ASM("csrw sepc, %0" : : "r"(value) : "cc");
     }
 
     static unsigned int cores() {
