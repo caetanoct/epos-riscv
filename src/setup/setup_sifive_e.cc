@@ -165,3 +165,9 @@ void Setup_SifiveE::setup_machine_environment()
 __END_SYS
 
 void _setup() { Setup_SifiveE::init(); }
+
+void _mmode_forward() {
+    if (CPU::int_enabled())
+        CPU::sip(CPU::STI);
+    ASM("mret");
+}
