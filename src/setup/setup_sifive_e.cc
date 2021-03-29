@@ -21,7 +21,7 @@ extern "C"
         _start();
     }
 }
-
+/*
 // Interrupt Vector Table
 void _setup()
 {
@@ -90,21 +90,7 @@ void _setup()
         j _start                                                                \t\n\
         ");
 }
-
-class Setup_SifiveE {
-private:
-    typedef CPU::Reg Reg;
-    typedef MMU::RV32_Flags RV32_Flags;
-    typedef MMU::Page_Table Page_Table;
-    typedef MMU::Page_Directory Page_Directory;
-    typedef MMU::PT_Entry PT_Entry;
-
-public:
-    static void init() { setup_machine_environment(); }
-    static void setup_machine_environment();
-    static void setup_supervisor_environment();
-    static void build_page_tables();
-};
+*/
 
 __BEGIN_SYS
 

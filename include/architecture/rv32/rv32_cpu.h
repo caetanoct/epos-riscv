@@ -415,7 +415,8 @@ public:
     }
 
     static void smp_barrier(unsigned long cores = cores()) { CPU_Common::smp_barrier<&finc>(cores, id()); }
-
+    
+    static void mmode_int_disable() { ASM("csrc mstatus, %0" : :"r"(MIE)); }
     static void int_enable() { ASM("csrs mstatus, %0" : :"r"(MIE)); }
     static void int_disable() { ASM("csrc mstatus, %0" : :"r"(MIE)); }
     static bool int_enabled() { return (mstatus() & MIE) ; }

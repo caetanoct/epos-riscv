@@ -15,6 +15,8 @@ __BEGIN_SYS
 class MMU: public MMU_Common<0, 0, 0>
 {
     friend class CPU;
+    friend class Setup_SifiveE;
+
 
 private:
     typedef Grouping_List<unsigned int> List;
