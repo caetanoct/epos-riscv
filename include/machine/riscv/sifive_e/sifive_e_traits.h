@@ -23,8 +23,8 @@ template <> struct Traits<Machine>: public Traits<Machine_Common>
 
     // Physical Memory
     static const unsigned int MEM_BASE          = 0x80000000;
-    static const unsigned int VECTOR_TABLE      = NOT_USED;
-    static const unsigned int PAGE_TABLES       = NOT_USED; // No paging MMU
+    static const unsigned int VECTOR_TABLE      = 0x00010000; // Defined by uboot@QEMU FIXME = Check this
+    static const unsigned int PAGE_TABLES       = 0x87f00000; // MEM_TOP - 16 MB
     static const unsigned int MEM_TOP           = 0x87ffffff; // 128 MB
     static const unsigned int BOOT_STACK        = 0x87ffffff;
 
@@ -38,20 +38,20 @@ template <> struct Traits<Machine>: public Traits<Machine_Common>
     static const unsigned int APP_DATA          = 0x80000000;
     static const unsigned int APP_HIGH          = 0x87ffffff;
 
-    static const unsigned int PHY_MEM           = NOT_USED; // No paging MMU
-    static const unsigned int IO_BASE           = NOT_USED; // No paging MMU
-    static const unsigned int IO_TOP            = NOT_USED; // No paging MMU
-
-    static const unsigned int SYS               = NOT_USED; // No paging MMU
-    static const unsigned int SYS_CODE          = NOT_USED; // No paging MMU
-    static const unsigned int SYS_DATA          = NOT_USED; // No paging MMU
-    static const unsigned int SYS_HEAP          = NOT_USED; // No paging MMU
-    static const unsigned int SYS_STACK         = NOT_USED; // No paging MMU
+    static const unsigned int PHY_MEM           = 0x80000000; // 2 GB
+    static const unsigned int IO_BASE           = 0x40000000; // 4 GB - 256 MB
+    static const unsigned int IO_TOP            = 0x7fffffff; // 4 GB - 12 MB
 
     // Default Sizes and Quantities
     static const unsigned int STACK_SIZE        = 16 * 1024;
     static const unsigned int HEAP_SIZE         = 16 * 1024 * 1024;
     static const unsigned int MAX_THREADS       = 16;
+
+    static const unsigned int SYS               = IO_TOP;     // 4 GB - 12 MB
+    static const unsigned int SYS_CODE          = 0x80000000;
+    static const unsigned int SYS_DATA          = 0x80000000;
+    static const unsigned int SYS_HEAP          = SYS_DATA;
+    static const unsigned int SYS_STACK         = MEM_TOP + 1 - STACK_SIZE;
 
     // Clocks
     static const unsigned int TIMER_CLOCK       = 10000000;
