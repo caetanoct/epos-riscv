@@ -37,12 +37,12 @@ struct Memory_Map
         PHY_MEM         = Traits<Machine>::PHY_MEM,
         IO              = Traits<Machine>::IO_BASE,
 
-        SYS             = Traits<Machine>::NOT_USED,
+        SYS             = Traits<Machine>::SYS,
         SYS_INFO        = unsigned(-1),                 // Dynamically built during initialization.
-        SYS_CODE        = Traits<Machine>::NOT_USED,
-        SYS_DATA        = Traits<Machine>::NOT_USED,
-        SYS_HEAP        = Traits<Machine>::NOT_USED,
-        SYS_STACK       = Traits<Machine>::NOT_USED
+        SYS_CODE        = Traits<Machine>::SYS_CODE,
+        SYS_DATA        = Traits<Machine>::SYS_DATA,
+        SYS_HEAP        = Traits<Machine>::SYS_HEAP,
+        SYS_STACK       = Traits<Machine>::SYS_STACK
     };
 
     // Logical Address Space
