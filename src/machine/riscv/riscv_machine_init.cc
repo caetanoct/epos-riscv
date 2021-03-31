@@ -1,4 +1,4 @@
-// EPOS RISC V Initialization
+// EPOS RISC V Initialization --
 
 #include <machine.h>
 

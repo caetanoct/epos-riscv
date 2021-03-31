@@ -103,8 +103,8 @@ private:
     typedef MMU::PT_Entry PT_Entry;
 
 public:
-    static void init() { setup_machine_environment(); }
-    static void setup_machine_environment();
+    static void init() __attribute__((naked)) { setup_machine_environment(); }
+    static void setup_machine_environment() __attribute__((naked));
     static void setup_supervisor_environment();
     static void build_page_tables();
 };

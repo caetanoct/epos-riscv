@@ -49,9 +49,9 @@ void IC::entry()
         "        sw         x29, 116(sp)                                \n"
         "        sw         x30, 120(sp)                                \n"
         "        sw         x31, 124(sp)                                \n"
-        "        csrr       x31, mstatus                                \n"
+        "        csrr       x31, sstatus                                \n"
         "        sw         x31, 128(sp)                                \n"
-        "        csrr       x31, mepc                                   \n"
+        "        csrr       x31, sepc                                   \n"
         "        sw         x31, 132(sp)                                \n"
         "        la          ra, .restore                               \n" // Set LR to restore context before returning
         "        j          %0                                          \n"
@@ -89,12 +89,12 @@ void IC::entry()
         "        lw         x29, 116(sp)                                \n"
         "        lw         x30, 120(sp)                                \n"
         "        lw         x31, 128(sp)                                \n"
-        "        csrw   mstatus, x31                                    \n"
+        "        csrw   sstatus, x31                                    \n"
         "        lw         x31, 132(sp)                                \n"
-        "        csrw      mepc, x31                                    \n"
+        "        csrw      sepc, x31                                    \n"
         "        lw         x31, 124(sp)                                \n"
         "        addi        sp, sp,    136                             \n"
-        "        mret                                                   \n" : : "i"(&dispatch));
+        "        sret                                                   \n" : : "i"(&dispatch));
 }
 
 void IC::dispatch()

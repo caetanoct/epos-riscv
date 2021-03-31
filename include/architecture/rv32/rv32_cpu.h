@@ -33,10 +33,10 @@ public:
         SIE             = 1 << 1,      // Supervisor Interrupts Enabled
         SPIE            = 1 << 5,      // Supervisor Previous Interrupts Enabled
         MPIE            = 1 << 7,      // Machine Previous Interrupts Enabled
-        MPP             = 3 << 11,     // Machine Previous Privilege
-        MPP_S           = 1 << 1,        // Macgube previous Privilege=Supervisor
-        SPP             = 3 << 12,     // Supervisor Previous Privilege
-        SPP_S             = 1 << 8,     // Supervisor Previous Privilege
+        MPP             = 3 << 11,     // Machine Previous Privilege = Machine
+        MPP_S           = 3 << 11,     // Machine Previous Privilege = Supervisor
+        // SPP             = 3 << 12,  // Supervisor Previous Privilege = Machine
+        SPP_S           = 1 << 8,      // Supervisor Previous Privilege = Supervisor
         MPRV            = 1 << 17,     // Memory Priviledge
         TVM             = 1 << 20      // Trap Virtual Memory //not allow MMU
     };
@@ -64,7 +64,7 @@ public:
         EXC_DWFAULT     = 7,    // Store/AMO access fault
         EXC_ENVU        = 8,    // Environment call from U-mode
         EXC_ENVS        = 9,    // Environment call from S-mode
-        EXC_ENVH        = 10,   // Environment call from H-mode
+        // EXC_ENVH        = 10,// Environment call from H-mode
         EXC_ENVM        = 11    // Environment call from M-m
     };
 
@@ -179,7 +179,7 @@ public:
     }
 
     static void tp(const Reg32 & tp) {
-        ASM("mv tp, %0":  : "r"(tp) :);
+        ASM("mv tp, %0" : : "r"(tp) :);
     }
 
     static Reg32 sp() {
@@ -260,17 +260,14 @@ public:
 
     static unsigned int id() {
         // !SMODE
-        // return tp
         return 0;
     }
 
     static unsigned int mhartid() {
         int id;
-        ASM("csrr %0, mhartid": "=r"(id) : : "memory", "cc");
+        ASM("csrr %0, mhartid" : "=r"(id) : : "memory", "cc");
         return id & 0x3;
     }
-
-    // STATUS CONTROL REGISTERS
 
     static void mstatus(Reg value) {
         ASM("csrs mstatus, %0" : : "r"(value) : "cc");
@@ -289,7 +286,7 @@ public:
         ASM("csrr %0, mstatus" : "=r"(value) : : );
         return value;
     }
-    
+
     static Reg sstatus() {
         Reg value;
         ASM("csrr %0, sstatus" : "=r"(value) : : );
@@ -302,15 +299,13 @@ public:
         return value;
     }
 
-    // EXCEPTIONS
-
     static void mepc(Reg value) {
         ASM("csrw mepc, %0" : : "r"(value) : "cc");
     }
 
     static void mtvec(Reg value) {
         ASM("csrw mtvec, %0" : : "r"(value) : "cc");
-    }   
+    }
 
     static void mie(Reg value) {
         ASM("csrs mie, %0" : : "r"(value) : "cc");
@@ -319,7 +314,7 @@ public:
     static void mie_clear(Reg value) {
         ASM("csrc mie, %0" : : "r"(value) : "cc");
     }
-    
+
     static void mie_write(Reg value) {
         ASM("csrw mie, %0" : : "r"(value) : "cc");
     }
@@ -329,7 +324,7 @@ public:
         ASM("csrr %0, mie" : "=r"(value) : : );
         return value;
     }
-    
+
     static void mip(Reg value) {
         ASM("csrs mip, %0" : : "r"(value) : "cc");
     }
@@ -354,16 +349,14 @@ public:
         return value;
     }
 
-    // SUPERVISOR MODE
-    
     static void satp(Reg value) {
-        ASM("csrw satp, %0" : : "r"(value) : "cc");
+        ASM("csrs satp, %0" : : "r"(value) : "cc");
     }
-    
+
     static void satp_write(Reg value) {
         ASM("csrw satp, %0" : : "r"(value) : "cc");
     }
-    
+
     static void mideleg_write(Reg value) {
         ASM("csrw mideleg, %0" : : "r"(value) : "cc");
     }
@@ -415,11 +408,11 @@ public:
     }
 
     static void smp_barrier(unsigned long cores = cores()) { CPU_Common::smp_barrier<&finc>(cores, id()); }
-    
-    static void mmode_int_disable() { ASM("csrc mstatus, %0" : :"r"(MIE)); }
-    static void int_enable() { ASM("csrs mstatus, %0" : :"r"(MIE)); }
-    static void int_disable() { ASM("csrc mstatus, %0" : :"r"(MIE)); }
-    static bool int_enabled() { return (mstatus() & MIE) ; }
+
+    static void mmode_int_disable() { ASM("csrc mstatus, %0" : : "r"(MIE)); }
+    static void int_enable() { ASM("csrs sstatus, %0" : :"r"(SIE)); }
+    static void int_disable() { ASM("csrc sstatus, %0" : :"r"(SIE)); }
+    static bool int_enabled() { return (sstatus() & SIE) ; }
     static bool int_disabled() { return !int_enabled(); }
 
     static void csrr31() { ASM("csrr x31, mstatus" : : : "x31"); }
