@@ -14,87 +14,84 @@ IC::Interrupt_Handler IC::_int_vector[IC::INTS];
 void IC::entry()
 {
     // Handle interrupts in machine mode
-    ASM("        .align 4                                               \n"
-        "                                                               \n"
-        "# Save context                                                 \n"
-        "        addi        sp,     sp,   -136                         \n"          // 32 regs of 4 bytes each = 128 Bytes
-        "        sw          x1,   4(sp)                                \n"
-        "        sw          x2,   8(sp)                                \n"
-        "        sw          x3,  12(sp)                                \n"
-        "        sw          x4,  16(sp)                                \n"
-        "        sw          x5,  20(sp)                                \n"
-        "        sw          x6,  24(sp)                                \n"
-        "        sw          x7,  28(sp)                                \n"
-        "        sw          x8,  32(sp)                                \n"
-        "        sw          x9,  36(sp)                                \n"
-        "        sw         x10,  40(sp)                                \n"
-        "        sw         x11,  44(sp)                                \n"
-        "        sw         x12,  48(sp)                                \n"
-        "        sw         x13,  52(sp)                                \n"
-        "        sw         x14,  56(sp)                                \n"
-        "        sw         x15,  60(sp)                                \n"
-        "        sw         x16,  64(sp)                                \n"
-        "        sw         x17,  68(sp)                                \n"
-        "        sw         x18,  72(sp)                                \n"
-        "        sw         x19,  76(sp)                                \n"
-        "        sw         x20,  80(sp)                                \n"
-        "        sw         x21,  84(sp)                                \n"
-        "        sw         x22,  88(sp)                                \n"
-        "        sw         x23,  92(sp)                                \n"
-        "        sw         x24,  96(sp)                                \n"
-        "        sw         x25, 100(sp)                                \n"
-        "        sw         x26, 104(sp)                                \n"
-        "        sw         x27, 108(sp)                                \n"
-        "        sw         x28, 112(sp)                                \n"
-        "        sw         x29, 116(sp)                                \n"
-        "        sw         x30, 120(sp)                                \n"
-        "        sw         x31, 124(sp)                                \n"
-        "        csrr       x31, sstatus                                \n"
-        "        sw         x31, 128(sp)                                \n"
-        "        csrr       x31, sepc                                   \n"
-        "        sw         x31, 132(sp)                                \n"
-        "        la          ra, .restore                               \n" // Set LR to restore context before returning
-        "        j          %0                                          \n"
-        "                                                               \n"
-        "# Restore context                                              \n"
-        ".restore:                                                      \n"
-        "        lw          x1,   4(sp)                                \n"
-        "        lw          x2,   8(sp)                                \n"
-        "        lw          x3,  12(sp)                                \n"
-        "        lw          x4,  16(sp)                                \n"
-        "        lw          x5,  20(sp)                                \n"
-        "        lw          x6,  24(sp)                                \n"
-        "        lw          x7,  28(sp)                                \n"
-        "        lw          x8,  32(sp)                                \n"
-        "        lw          x9,  36(sp)                                \n"
-        "        lw         x10,  40(sp)                                \n"
-        "        lw         x11,  44(sp)                                \n"
-        "        lw         x12,  48(sp)                                \n"
-        "        lw         x13,  52(sp)                                \n"
-        "        lw         x14,  56(sp)                                \n"
-        "        lw         x15,  60(sp)                                \n"
-        "        lw         x16,  64(sp)                                \n"
-        "        lw         x17,  68(sp)                                \n"
-        "        lw         x18,  72(sp)                                \n"
-        "        lw         x19,  76(sp)                                \n"
-        "        lw         x20,  80(sp)                                \n"
-        "        lw         x21,  84(sp)                                \n"
-        "        lw         x22,  88(sp)                                \n"
-        "        lw         x23,  92(sp)                                \n"
-        "        lw         x24,  96(sp)                                \n"
-        "        lw         x25, 100(sp)                                \n"
-        "        lw         x26, 104(sp)                                \n"
-        "        lw         x27, 108(sp)                                \n"
-        "        lw         x28, 112(sp)                                \n"
-        "        lw         x29, 116(sp)                                \n"
-        "        lw         x30, 120(sp)                                \n"
-        "        lw         x31, 128(sp)                                \n"
-        "        csrw   sstatus, x31                                    \n"
-        "        lw         x31, 132(sp)                                \n"
-        "        csrw      sepc, x31                                    \n"
-        "        lw         x31, 124(sp)                                \n"
-        "        addi        sp, sp,    136                             \n"
-        "        sret                                                   \n" : : "i"(&dispatch));
+    ASM("        .align 4                                               \n");
+    
+    ASM("        addi        sp,     sp,   -136                         \n");
+    ASM("        sw          x1,   4(sp)                                \n");
+    ASM("        sw          x2,   8(sp)                                \n");
+    ASM("        sw          x3,  12(sp)                                \n");
+    ASM("        sw          x4,  16(sp)                                \n");
+    ASM("        sw          x5,  20(sp)                                \n");
+    ASM("        sw          x6,  24(sp)                                \n");
+    ASM("        sw          x7,  28(sp)                                \n");
+    ASM("        sw          x8,  32(sp)                                \n");
+    ASM("        sw          x9,  36(sp)                                \n");
+    ASM("        sw         x10,  40(sp)                                \n");
+    ASM("        sw         x11,  44(sp)                                \n");
+    ASM("        sw         x12,  48(sp)                                \n");
+    ASM("        sw         x13,  52(sp)                                \n");
+    ASM("        sw         x14,  56(sp)                                \n");
+    ASM("        sw         x15,  60(sp)                                \n");
+    ASM("        sw         x16,  64(sp)                                \n");
+    ASM("        sw         x17,  68(sp)                                \n");
+    ASM("        sw         x18,  72(sp)                                \n");
+    ASM("        sw         x19,  76(sp)                                \n");
+    ASM("        sw         x20,  80(sp)                                \n");
+    ASM("        sw         x21,  84(sp)                                \n");
+    ASM("        sw         x22,  88(sp)                                \n");
+    ASM("        sw         x23,  92(sp)                                \n");
+    ASM("        sw         x24,  96(sp)                                \n");
+    ASM("        sw         x25, 100(sp)                                \n");
+    ASM("        sw         x26, 104(sp)                                \n");
+    ASM("        sw         x27, 108(sp)                                \n");
+    ASM("        sw         x28, 112(sp)                                \n");
+    ASM("        sw         x29, 116(sp)                                \n");
+    ASM("        sw         x30, 120(sp)                                \n");
+    ASM("        sw         x31, 124(sp)                                \n");
+    ASM("        csrr       x31, sstatus                                \n");
+    ASM("        sw         x31, 128(sp)                                \n");
+    ASM("        csrr       x31, sepc                                   \n");
+    ASM("        sw         x31, 132(sp)                                \n");
+    ASM("        la          ra, .restore                               \n");
+    ASM("        j          %0                                          \n" : : "i"(&dispatch));
+    ASM(".restore:                                                      \n");
+    ASM("        lw          x1,   4(sp)                                \n");
+    ASM("        lw          x2,   8(sp)                                \n");
+    ASM("        lw          x3,  12(sp)                                \n");
+    ASM("        lw          x4,  16(sp)                                \n");
+    ASM("        lw          x5,  20(sp)                                \n");
+    ASM("        lw          x6,  24(sp)                                \n");
+    ASM("        lw          x7,  28(sp)                                \n");
+    ASM("        lw          x8,  32(sp)                                \n");
+    ASM("        lw          x9,  36(sp)                                \n");
+    ASM("        lw         x10,  40(sp)                                \n");
+    ASM("        lw         x11,  44(sp)                                \n");
+    ASM("        lw         x12,  48(sp)                                \n");
+    ASM("        lw         x13,  52(sp)                                \n");
+    ASM("        lw         x14,  56(sp)                                \n");
+    ASM("        lw         x15,  60(sp)                                \n");
+    ASM("        lw         x16,  64(sp)                                \n");
+    ASM("        lw         x17,  68(sp)                                \n");
+    ASM("        lw         x18,  72(sp)                                \n");
+    ASM("        lw         x19,  76(sp)                                \n");
+    ASM("        lw         x20,  80(sp)                                \n");
+    ASM("        lw         x21,  84(sp)                                \n");
+    ASM("        lw         x22,  88(sp)                                \n");
+    ASM("        lw         x23,  92(sp)                                \n");
+    ASM("        lw         x24,  96(sp)                                \n");
+    ASM("        lw         x25, 100(sp)                                \n");
+    ASM("        lw         x26, 104(sp)                                \n");
+    ASM("        lw         x27, 108(sp)                                \n");
+    ASM("        lw         x28, 112(sp)                                \n");
+    ASM("        lw         x29, 116(sp)                                \n");
+    ASM("        lw         x30, 120(sp)                                \n");
+    ASM("        lw         x31, 128(sp)                                \n");
+    ASM("        csrw   sstatus, x31                                    \n");
+    ASM("        lw         x31, 132(sp)                                \n");
+    ASM("        csrw      sepc, x31                                    \n");
+    ASM("        lw         x31, 124(sp)                                \n");
+    ASM("        addi        sp, sp,    136                             \n");
+    ASM("        sret                                                   \n");
 }
 
 void IC::dispatch()

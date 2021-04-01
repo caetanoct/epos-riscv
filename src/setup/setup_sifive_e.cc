@@ -147,7 +147,7 @@ void Setup_SifiveE::setup_machine_environment()
     CPU::mie_write(CPU::MTI);
 
     build_page_tables();
-    // CPU::satp_write(0); // paging off
+    CPU::satp_write(0); // paging off
     
     // forward everything
     CPU::sstatus_write( CPU::SIE | CPU::SPIE | CPU::SPP_S );
@@ -159,6 +159,8 @@ void Setup_SifiveE::setup_machine_environment()
     CPU::mideleg_write(CPU::SSI | CPU::STI | CPU::SEI);
     CPU::medeleg_write(0xffff);
     
+    //CPU::int_disable();
+
     ASM("mret");
 }
 

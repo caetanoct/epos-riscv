@@ -34,7 +34,7 @@ public:
         SPIE            = 1 << 5,      // Supervisor Previous Interrupts Enabled
         MPIE            = 1 << 7,      // Machine Previous Interrupts Enabled
         MPP             = 3 << 11,     // Machine Previous Privilege = Machine
-        MPP_S           = 3 << 11,     // Machine Previous Privilege = Supervisor
+        MPP_S           = 1 << 11,     // Machine Previous Privilege = Supervisor
         // SPP             = 3 << 12,  // Supervisor Previous Privilege = Machine
         SPP_S           = 1 << 8,      // Supervisor Previous Privilege = Supervisor
         MPRV            = 1 << 17,     // Memory Priviledge
@@ -73,7 +73,7 @@ public:
     {
     public:
         // Contexts are loaded with mret, which gets pc from mepc and updates some bits of mstatus, that's why _st is initialized with MPIE and MPP
-        Context(const Log_Addr & entry, const Log_Addr & exit): _st(MPIE | MPP), _pc(entry), _x1(exit) {
+        Context(const Log_Addr & entry, const Log_Addr & exit): _st(SPIE | SPP_S), _pc(entry), _x1(exit) {
             if(Traits<Build>::hysterically_debugged || Traits<Thread>::trace_idle) {
                                                                         _x5 =  5;  _x6 =  6;  _x7 =  7;  _x8 =  8;  _x9 =  9;
                 _x10 = 10; _x11 = 11; _x12 = 12; _x13 = 13; _x14 = 14; _x15 = 15; _x16 = 16; _x17 = 17; _x18 = 18; _x19 = 19;
@@ -350,7 +350,7 @@ public:
     }
 
     static void satp(Reg value) {
-        ASM("csrs satp, %0" : : "r"(value) : "cc");
+        ASM("csrw satp, %0" : : "r"(value) : "cc");
     }
 
     static void satp_write(Reg value) {
@@ -409,7 +409,7 @@ public:
 
     static void smp_barrier(unsigned long cores = cores()) { CPU_Common::smp_barrier<&finc>(cores, id()); }
 
-    static void mmode_int_disable() { ASM("csrc mstatus, %0" : : "r"(MIE)); }
+    static void mmode_int_disable() { ASM("csrc mstatus, %0" : :"r"(MIE)); }
     static void int_enable() { ASM("csrs sstatus, %0" : :"r"(SIE)); }
     static void int_disable() { ASM("csrc sstatus, %0" : :"r"(SIE)); }
     static bool int_enabled() { return (sstatus() & SIE) ; }

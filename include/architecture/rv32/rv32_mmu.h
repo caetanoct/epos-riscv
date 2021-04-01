@@ -12,7 +12,7 @@
 
 __BEGIN_SYS
 
-class MMU: public MMU_Common<0, 0, 0>
+class MMU: public MMU_Common<10, 10, 12>
 {
     friend class CPU;
     friend class Setup_SifiveE;
@@ -37,7 +37,7 @@ public:
                 EXEC    = 1 << 3,
                 ACCESSED = 1 << 6,
                 DIRTY   = 1 << 7,
-                RW      = READ | WRITE, // POSSIVELMENTE INCORRETO
+                //RW      = READ | WRITE, // POSSIVELMENTE INCORRETO
                 SYS     = VALID | READ | WRITE | EXEC,
                 USR     = VALID | READ | WRITE | EXEC,
             };
@@ -65,7 +65,7 @@ public:
             Page_Table() {}
 
             void remap(const RV32_Flags & flags) {
-                for (int i = 0; i < 1024; ++i) {
+                for (int i = 0; i < 1024; i++) {
                     unsigned int pte = (((unsigned)this - Traits<Machine>::PAGE_TABLES) >> 12 ) -1;
                     pte = pte << 20;
                     pte += ((i) << 10);
@@ -80,8 +80,8 @@ public:
     {
     public:
         Chunk() {}
-        Chunk(unsigned int bytes, RV32_Flags flags): _phy_addr(alloc(bytes)), _bytes(bytes), _flags(flags) {}
-        Chunk(Phy_Addr phy_addr, unsigned int bytes, RV32_Flags flags): _phy_addr(phy_addr), _bytes(bytes), _flags(flags) {}
+        Chunk(unsigned int bytes, Flags flags): _phy_addr(alloc(bytes)), _bytes(bytes), _flags(RV32_Flags(flags)) {}
+        Chunk(Phy_Addr phy_addr, unsigned int bytes, Flags flags): _phy_addr(phy_addr), _bytes(bytes), _flags(RV32_Flags(flags)) {}
 
         ~Chunk() { free(_phy_addr, _bytes); }
 
