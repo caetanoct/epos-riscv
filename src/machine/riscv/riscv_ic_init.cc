@@ -13,7 +13,9 @@ void IC::init()
 
     CPU::int_disable(); // will be reenabled at Thread::init() by Context::load()
 
-    disable(); // will be enabled on demand as handlers are registered
+    // A linha disable causava errode instrução invalida
+    // Enquanto sem ela estamos falhando em MMU::free no assert n < List(element)
+    //disable(); // will be enabled on demand as handlers are registered
 
     // Set all exception handlers to exception()
     for(Interrupt_Id i = 0; i < CPU::EXCEPTIONS; i++)
