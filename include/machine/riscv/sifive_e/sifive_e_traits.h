@@ -43,7 +43,7 @@ template <> struct Traits<Machine>: public Traits<Machine_Common>
     static const unsigned int IO_TOP            = 0x7fffffff; // 4 GB - 12 MB
 
     // Default Sizes and Quantities
-    static const unsigned int STACK_SIZE        = 16 * 1024;
+    static const unsigned int STACK_SIZE        = 1025 * 4 * 1024;
     static const unsigned int HEAP_SIZE         = 16 * 1024 * 1024;
     static const unsigned int MAX_THREADS       = 16;
 

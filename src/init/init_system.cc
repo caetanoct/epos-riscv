@@ -36,12 +36,12 @@ public:
 
         // Initialize the machine
         db<Init>(INF) << "Initializing the machine: " << endl;
-        Machine::init();
+        Machine::init(); // timer init
         db<Init>(INF) << "done!" << endl;
 
         // Initialize system abstractions
         db<Init>(INF) << "Initializing system abstractions: " << endl;
-        System::init();
+        System::init(); // alarm e thread init
         db<Init>(INF) << "done!" << endl;
 
         // Randomize the Random Numbers Generator's seed
