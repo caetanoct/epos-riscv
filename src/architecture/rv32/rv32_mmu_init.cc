@@ -22,6 +22,7 @@ void MMU::init()
     free(Memory_Map::MEM_TOP + 1 - Traits<Machine>::STACK_SIZE * Traits<Machine>::CPUS, pages(Traits<Machine>::STACK_SIZE * Traits<Machine>::CPUS));
 
     // Remember the master page directory (created during SETUP)
+    // Master apontando para satp --> inicio da tabela de paginas
     _master = reinterpret_cast<Page_Directory *>(CPU::pdp());
 }
 

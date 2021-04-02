@@ -206,7 +206,12 @@ public:
         return value;
     }
 
-    static Reg32 pdp() { return 0; }
+    static Reg32 pdp() { 
+        Reg32 value;
+        ASM("csrr %0, satp" : "=r"(value) : : );
+        return value;
+    }
+
     static void pdp(const Reg32 & pdp) {}
 
 
