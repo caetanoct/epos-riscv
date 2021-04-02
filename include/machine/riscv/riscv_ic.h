@@ -88,7 +88,7 @@ public:
 
     static void disable() {
         db<IC>(TRC) << "IC::disable()" << endl;
-        CPU::mie_clear(CPU::MSI | CPU::MTI | CPU::MEI);
+        CPU::sie_clear(CPU::SSI | CPU::STI | CPU::SEI);
     }
 
     static void disable(Interrupt_Id i) {
