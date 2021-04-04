@@ -1376,12 +1376,25 @@ public:
         }
     }
 
+    Element * search_worst() {
+        Element * e = head();
+        Element * largest = e;
+        
+        for (unsigned int i = 0; i < size() - 1; i++) {
+            e = e->next();
+            if (e->size() > largest->size())
+                largest = e;
+        }
+
+        return largest;
+    }
+
     Element * search_decrementing(unsigned int s) {
         db<Lists>(TRC) << "Grouping_List::search_decrementing(s=" << s << ")" << endl;
         print_head();
         print_tail();
 
-        Element * e = search_size(s);
+        Element * e = search_worst();
         if(e) {
             e->shrink(s);
             _grouped_size -= s;
