@@ -21,6 +21,7 @@ class MMU: public MMU_Common<10, 10, 12>
 private:
     typedef Grouping_List<unsigned int> List;
 
+
     static const unsigned int PHY_MEM = Memory_Map::PHY_MEM;
 
 public:
@@ -56,13 +57,16 @@ public:
     // Page_Table
     class Page_Table {
         friend class Setup_SifiveE;
+
         
         private:
             typedef unsigned int PTE;
-            PTE ptes[1024];
+            PT_Entry ptes[1024];
         
         public:
             Page_Table() {}
+
+            PT_Entry & operator[](unsigned int i) { return ptes[i]; }
 
             void remap(const RV32_Flags & flags) {
                 for (int i = 0; i < 1024; i++) {
@@ -172,7 +176,7 @@ public:
         assert(n > sizeof (List::Element));
 
         if(addr && n) {
-            List::Element * e = new (addr) List::Element(addr, n);
+            List::Element * e = new (phy2log(addr)) List::Element(addr, n);
             List::Element * m1, * m2;
             _free.insert_merging(e, &m1, &m2);
         }
@@ -180,9 +184,19 @@ public:
 
     static unsigned int allocable() { return _free.head() ? _free.head()->size() : 0; }
 
-    static Page_Directory * volatile current() { return 0; }
+    static Page_Directory * volatile current() { 
+        return reinterpret_cast<Page_Directory * volatile>(CPU::pdp());
+    }
 
-    static Phy_Addr physical(Log_Addr addr) { return addr; }
+    static Phy_Addr physical(Log_Addr addr) { 
+        Page_Directory * pd = current();
+        Page_Table * pt = (*pd)[directory(addr)];
+        return (*pt)[page(addr)] | offset(addr);
+    }
+
+    static Log_Addr phy2log(const Phy_Addr & phy) { 
+        return phy | PHY_MEM; 
+    }
 
     static void flush_tlb() {}
     static void flush_tlb(Log_Addr addr) {}
