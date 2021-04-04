@@ -18,5 +18,5 @@ void EDF::update() {
 
 // Since the definition of FCFS above is only known to this unit, forcing its instantiation here so it gets emitted in scheduler.o for subsequent linking with other units is necessary.
 template FCFS::FCFS<>(int p);
-
+template EDF::EDF<>(int p);
 __END_SYS
