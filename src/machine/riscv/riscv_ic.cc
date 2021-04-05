@@ -2,10 +2,14 @@
 
 #include <machine/machine.h>
 #include <machine/ic.h>
+#include <architecture/cpu.h>
+#include <machine/timer.h>
 
 extern "C" { void _int_entry() __attribute__ ((alias("_ZN4EPOS1S2IC5entryEv"))); }
 
 __BEGIN_SYS
+
+typedef unsigned long Reg;
 
 // Class attributes
 IC::Interrupt_Handler IC::_int_vector[IC::INTS];
@@ -52,6 +56,22 @@ void IC::entry()
     ASM("        sw         x31, 128(sp)                                \n");
     ASM("        csrr       x31, sepc                                   \n");
     ASM("        sw         x31, 132(sp)                                \n");
+
+    Reg id = CPU::mcause();
+    if(id & CLINT::INTERRUPT) {
+        if ((id & IC::INT_MASK) == CLINT::IRQ_MAC_SOFT) {
+            IC::ipi_eoi(id & IC::INT_MASK);
+        }
+        if ((id & IC::INT_MASK) == CLINT::IRQ_MAC_TIMER) {
+            Timer::reset();
+            CPU::sie(CPU::STI);
+        }
+        Reg interrupt_id = 1 << ((id & IC::INT_MASK) - 2);
+        if (CPU::int_enabled() && (CPU::sie() & (interrupt_id))) {
+            CPU::mip(interrupt_id); // Mandar pro supervisor
+        }
+    }
+
     ASM("        la          ra, .restore                               \n");
     ASM("        j          %0                                          \n" : : "i"(&dispatch));
     ASM(".restore:                                                      \n");
