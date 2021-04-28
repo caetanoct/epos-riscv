@@ -4,25 +4,11 @@
 #include <utility/heap.h>
 #include <machine.h>
 #include <memory.h>
+#include <process.h>
 #include <system.h>
 
 __BEGIN_SYS
 
-// This class purpose is simply to define a well-known entry point for
-// the system. It must be declared as the first global object in
-// system_scaffold.cc
-class First_Object
-{
-public:
-    First_Object() {
-        Machine::pre_init(reinterpret_cast<System_Info *>(Memory_Map::SYS_INFO));
-    }
-};
-
-// Global objects
-// These objects might be reconstructed several times in SMP configurations,
-// so their constructors must be stateless!
-First_Object __entry;
 OStream kout;
 OStream kerr;
 
@@ -31,5 +17,16 @@ System_Info * System::_si = reinterpret_cast<System_Info *>(Memory_Map::SYS_INFO
 char System::_preheap[];
 Segment * System::_heap_segment;
 Heap * System::_heap;
+
+extern "C" {
+    __USING_SYS;
+
+    void _panic() { Machine::panic(); }
+    void _exit(int s) { Thread::exit(s); for(;;); }
+    void __exit() { Thread::exit(CPU::fr()); }
+    void __cxa_pure_virtual() { db<void>(ERR) << "Pure Virtual method called!" << endl; }
+
+    void _print(const char * s) { Display::puts(s); }
+}
 
 __END_SYS

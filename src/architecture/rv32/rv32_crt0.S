@@ -1,4 +1,4 @@
-// EPOS RISC-V Program Starter
+// EPOS RISC-V 32 Program Starter
 
         .file "rv32_crt0.S"
 
@@ -11,7 +11,8 @@ _start:
         // Temporary stack(s) for INIT are created and configure by SETUP
 
         // Only hart (core) 0 cleans cache
-        bnez    x4, 2f
+        mv      t0, tp
+        bnez    t0, 2f
 
         // Set all bytes in the BSS section to zero.
         la      a0, __bss_start

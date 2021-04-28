@@ -11,7 +11,7 @@ __BEGIN_SYS
 class Init_System
 {
 private:
-    static const unsigned int HEAP_SIZE = Traits<System>::HEAP_SIZE;
+    static const unsigned int HEAP_SIZE = Traits<System>::multitask ? Traits<Machine>::HEAP_SIZE : Traits<System>::HEAP_SIZE;
 
 public:
     Init_System() {
@@ -36,17 +36,17 @@ public:
 
         // Initialize the machine
         db<Init>(INF) << "Initializing the machine: " << endl;
-        Machine::init(); // timer init
+        Machine::init();
         db<Init>(INF) << "done!" << endl;
 
         // Initialize system abstractions
         db<Init>(INF) << "Initializing system abstractions: " << endl;
-        System::init(); // alarm e thread init
+        System::init();
         db<Init>(INF) << "done!" << endl;
 
         // Randomize the Random Numbers Generator's seed
         if(Traits<Random>::enabled) {
-            db<Init>(INF) << "Randomizing the Random Numbers Generator's seed: " << endl;
+            db<Init>(INF) << "Randomizing the Random Numbers Generator's seed: ";
             if(Traits<TSC>::enabled)
                 Random::seed(TSC::time_stamp());
 

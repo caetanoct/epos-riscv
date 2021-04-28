@@ -1,0 +1,42 @@
+// EPOS First Thread Initializer
+
+#include <system.h>
+#include <process.h>
+
+__BEGIN_SYS
+
+class Init_End
+{
+public:
+    Init_End() {
+        db<Init>(TRC) << "Init_End()" << endl;
+
+        CPU::smp_barrier();
+
+        if(!Traits<System>::multithread) {
+            CPU::int_enable();
+            return;
+        }
+
+        db<Init>(INF) << "INIT ends here!" << endl;
+
+        // Thread::self() and Task::self() can be safely called after the construction of MAIN
+        // even if no reschedule() was called (running is set by the Scheduler at each insert())
+        Thread * first = Thread::self();
+
+        db<Init, Thread>(INF) << "Dispatching the first thread: " << first << endl;
+
+        CPU::smp_barrier();
+
+        // Interrupts have been disable at Thread::init() and will be reenabled by CPU::Context::load()
+        // but we first reset the timer to avoid getting a time interrupt during load()
+        if(Traits<Timer>::enabled)
+            Timer::reset();
+
+        first->_context->load();
+    }
+};
+
+Init_End init_end;
+
+__END_SYS

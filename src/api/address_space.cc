@@ -28,7 +28,7 @@ Address_Space::Log_Addr Address_Space::attach(Segment * seg)
     return tmp;
 }
 
-Address_Space::Log_Addr Address_Space::attach(Segment * seg, const Address_Space::Log_Addr & addr)
+Address_Space::Log_Addr Address_Space::attach(Segment * seg, Log_Addr addr)
 {
     Log_Addr tmp = Directory::attach(*seg, addr);
 
@@ -44,14 +44,14 @@ void Address_Space::detach(Segment * seg)
     Directory::detach(*seg);
 }
 
-void Address_Space::detach(Segment * seg, const Address_Space::Log_Addr & addr)
+void Address_Space::detach(Segment * seg, Log_Addr addr)
 {
     db<Address_Space>(TRC) << "Address_Space::detach(this=" << this << ",seg=" << seg << ",addr=" << addr << ")" << endl;
 
     Directory::detach(*seg, addr);
 }
 
-Address_Space::Phy_Addr Address_Space::physical(const Address_Space::Log_Addr & address)
+Address_Space::Phy_Addr Address_Space::physical(Log_Addr address)
 {
     return Directory::physical(address);
 }

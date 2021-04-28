@@ -15,7 +15,7 @@ __BEGIN_SYS
 
 class Thread
 {
-    friend class Init_First;            // context->load()
+    friend class Init_End;              // context->load()
     friend class Init_System;           // for init() on CPU != 0
     friend class Scheduler<Thread>;     // for link()
     friend class Synchronizer_Common;   // for lock() and sleep()

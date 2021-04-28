@@ -9,9 +9,8 @@ __BEGIN_SYS
 
 struct Memory_Map: public Cortex_Memory_Map
 {
-    // Physical Memory
-    // Base addresses for memory-mapped control and I/O devices
     enum {
+        // Base addresses for memory-mapped control and I/O devices
         SSI0_BASE       = 0x40008000,
         SSI1_BASE       = 0x40009000,
         UART0_BASE      = 0x4000c000, // PL011 UART
@@ -35,9 +34,14 @@ struct Memory_Map: public Cortex_Memory_Map
         GPIOD_BASE      = 0x400dc000, // PL061 GPIO Port D
         CCTEST_BASE     = 0x44010000,
         SCB_BASE        = 0xe000e000, // System Control Block
-    };
 
-    // Logical Address Space
+        // Logical Address Space
+        SYS_CODE        = NOT_USED,
+        SYS_INFO        = NOT_USED,
+        SYS_DATA        = NOT_USED,
+        SYS_STACK       = NOT_USED,
+        SYS_HEAP        = NOT_USED
+    };
 };
 
 __END_SYS

@@ -25,11 +25,11 @@ public:
     using MMU::Directory::pd;
 
     Log_Addr attach(Segment * seg);
-    Log_Addr attach(Segment * seg, const Log_Addr & addr);
+    Log_Addr attach(Segment * seg, Log_Addr addr);
     void detach(Segment * seg);
-    void detach(Segment * seg, const Log_Addr & addr);
+    void detach(Segment * seg, Log_Addr addr);
 
-    Phy_Addr physical(const Log_Addr & address);
+    Phy_Addr physical(Log_Addr address);
 };
 
 
@@ -43,8 +43,8 @@ public:
     typedef MMU::Flags Flags;
 
 public:
-    Segment(unsigned int bytes, const Flags & flags = Flags::APP);
-    Segment(const Phy_Addr & phy_addr, unsigned int bytes, const Flags & flags);
+    Segment(unsigned int bytes, Flags flags = Flags::APP);
+    Segment(Phy_Addr & phy_addr, unsigned int bytes, Flags flags);
     ~Segment();
 
     unsigned int size() const;

@@ -9,8 +9,8 @@ __BEGIN_SYS
 
 struct Memory_Map: public Cortex_Memory_Map
 {
-    // Physical Memory
     enum {
+        // Base addresses for memory-mapped control and I/O devices
         MBOX_COM_BASE           = 0x3ef00000, // RAM memory for device-os communication (must be mapped as device by the MMU)
         PPS_BASE                = 0x3f000000, // Private Peripheral Space
         TIMER0_BASE             = 0x3f003000, // System Timer (free running)
@@ -28,9 +28,14 @@ struct Memory_Map: public Cortex_Memory_Map
         SD1_BASE                = 0x3f300000, // Arasan sdhci controller
         DMA1_BASE               = 0x3fe05000,
         CTRL_BASE               = 0x40000000, // BCM MailBox
-    };
 
-    // Logical Address Space
+        // Logical Address Space
+        SYS_CODE                = Traits<Machine>::SYS_CODE,
+        SYS_INFO                = NOT_USED,
+        SYS_DATA                = Traits<Machine>::SYS_CODE,
+        SYS_STACK               = NOT_USED,
+        SYS_HEAP                = NOT_USED
+    };
 };
 
 __END_SYS

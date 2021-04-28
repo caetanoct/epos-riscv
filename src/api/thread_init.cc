@@ -26,6 +26,8 @@ void Thread::init()
         // before Init_Application to construct MAIN's global objects.
         main = reinterpret_cast<Main *>(__epos_app_entry);
 
+    Criterion::init();        
+
     new (SYSTEM) Thread(Thread::Configuration(Thread::RUNNING, Thread::MAIN), main);
 
     // Idle thread creation does not cause rescheduling (see Thread::constructor_epilogue)

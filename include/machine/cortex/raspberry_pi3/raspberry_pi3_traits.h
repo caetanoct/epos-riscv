@@ -8,43 +8,46 @@
 __BEGIN_SYS
 
 class Machine_Common;
-template <> struct Traits<Machine_Common>: public Traits<Build>
+template<> struct Traits<Machine_Common>: public Traits<Build>
 {
     static const bool debugged = Traits<Build>::debugged;
 };
 
-template <> struct Traits<Machine>: public Traits<Machine_Common>
+template<> struct Traits<Machine>: public Traits<Machine_Common>
 {
     static const bool cpus_use_local_timer      = false;
 
     static const unsigned int NOT_USED          = 0xffffffff;
     static const unsigned int CPUS              = Traits<Build>::CPUS;
 
+    // Physical Memory
+    static const unsigned int MEM_BASE          = 0x00000000;
+    static const unsigned int MEM_TOP           = 0x3eeeffff;   // 1 GB
+    static const unsigned int MIO_BASE          = 0x40000000;
+    static const unsigned int MIO_TOP           = 0x400000ff;
+    static const unsigned int VECTOR_TABLE      = 0x00008000;   // Defined by uboot@QEMU
+    static const unsigned int PAGE_TABLES       = 0x3eef0000;   // 1006 MB
+
     // Boot Image
     static const unsigned int BOOT_LENGTH_MIN   = NOT_USED;
     static const unsigned int BOOT_LENGTH_MAX   = NOT_USED;
+    static const unsigned int BOOT_STACK        = 0x3eeefffc;   // MEM_TOP - sizeof(int) - 1M for boot stacks
 
-    // Physical Memory
-    static const unsigned int MEM_BASE          = 0x00000000;
-    static const unsigned int VECTOR_TABLE      = 0x00008000; // Defined by uboot@QEMU
-    static const unsigned int PAGE_TABLES       = 0x3eef0000; // 1006 MB
-    static const unsigned int MEM_TOP           = 0x3eeeffff; // 1 GB
-    static const unsigned int BOOT_STACK        = 0x3eeefffc; // MEM_TOP - sizeof(int) - 1M for boot stacks
     // Logical Memory Map
     static const unsigned int BOOT              = NOT_USED;
+    static const unsigned int IMAGE             = NOT_USED;
     static const unsigned int SETUP             = NOT_USED;
     static const unsigned int INIT              = NOT_USED;
 
-    static const unsigned int APP_LOW           = 0x00000000;
+    static const unsigned int APP_LOW           = MEM_BASE;
     static const unsigned int APP_CODE          = 0x00008000;
     static const unsigned int APP_DATA          = 0x00008000;
-    static const unsigned int APP_HIGH          = 0x3eeeffff;
+    static const unsigned int APP_HIGH          = MEM_TOP;
 
     static const unsigned int PHY_MEM           = 0x40000000; // 2 GB
-    static const unsigned int IO_BASE           = 0x40000000; // 4 GB - 256 MB
-    static const unsigned int IO_TOP            = 0x400000ff; // 4 GB - 12 MB
+    static const unsigned int IO                = NOT_USED;     // this machine only supports the library architecture of EPOS
 
-    static const unsigned int SYS               = IO_TOP;     // 4 GB - 12 MB
+    static const unsigned int SYS               = 0xff700000;   // 4 GB - 9 MB
     static const unsigned int SYS_CODE          = 0xff700000;
     static const unsigned int SYS_DATA          = 0xff740000;
 
@@ -59,7 +62,7 @@ template <> struct Traits<Machine>: public Traits<Machine_Common>
     static const unsigned int DDR_PLL_CLOCK     = 1066666666;
 };
 
-template <> struct Traits<IC>: public Traits<Machine_Common>
+template<> struct Traits<IC>: public Traits<Machine_Common>
 {
     static const bool debugged = hysterically_debugged;
 

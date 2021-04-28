@@ -2,14 +2,11 @@
 
 #include <machine/machine.h>
 #include <machine/ic.h>
-#include <architecture/cpu.h>
 #include <machine/timer.h>
 
-extern "C" { void _int_entry() __attribute__ ((alias("_ZN4EPOS1S2IC5entryEv"))); }
+extern "C" { void _int_entry() __attribute__ ((nothrow, alias("_ZN4EPOS1S2IC5entryEv"))); }
 
 __BEGIN_SYS
-
-typedef unsigned long Reg;
 
 // Class attributes
 IC::Interrupt_Handler IC::_int_vector[IC::INTS];
@@ -17,101 +14,100 @@ IC::Interrupt_Handler IC::_int_vector[IC::INTS];
 // Class methods
 void IC::entry()
 {
-    // Handle interrupts in machine mode
-    ASM("        .align 4                                               \n");
-    
-    ASM("        addi        sp,     sp,   -136                         \n");
-    ASM("        sw          x1,   4(sp)                                \n");
-    ASM("        sw          x2,   8(sp)                                \n");
-    ASM("        sw          x3,  12(sp)                                \n");
-    ASM("        sw          x4,  16(sp)                                \n");
-    ASM("        sw          x5,  20(sp)                                \n");
-    ASM("        sw          x6,  24(sp)                                \n");
-    ASM("        sw          x7,  28(sp)                                \n");
-    ASM("        sw          x8,  32(sp)                                \n");
-    ASM("        sw          x9,  36(sp)                                \n");
-    ASM("        sw         x10,  40(sp)                                \n");
-    ASM("        sw         x11,  44(sp)                                \n");
-    ASM("        sw         x12,  48(sp)                                \n");
-    ASM("        sw         x13,  52(sp)                                \n");
-    ASM("        sw         x14,  56(sp)                                \n");
-    ASM("        sw         x15,  60(sp)                                \n");
-    ASM("        sw         x16,  64(sp)                                \n");
-    ASM("        sw         x17,  68(sp)                                \n");
-    ASM("        sw         x18,  72(sp)                                \n");
-    ASM("        sw         x19,  76(sp)                                \n");
-    ASM("        sw         x20,  80(sp)                                \n");
-    ASM("        sw         x21,  84(sp)                                \n");
-    ASM("        sw         x22,  88(sp)                                \n");
-    ASM("        sw         x23,  92(sp)                                \n");
-    ASM("        sw         x24,  96(sp)                                \n");
-    ASM("        sw         x25, 100(sp)                                \n");
-    ASM("        sw         x26, 104(sp)                                \n");
-    ASM("        sw         x27, 108(sp)                                \n");
-    ASM("        sw         x28, 112(sp)                                \n");
-    ASM("        sw         x29, 116(sp)                                \n");
-    ASM("        sw         x30, 120(sp)                                \n");
-    ASM("        sw         x31, 124(sp)                                \n");
-    ASM("        csrr       x31, sstatus                                \n");
-    ASM("        sw         x31, 128(sp)                                \n");
-    ASM("        csrr       x31, sepc                                   \n");
-    ASM("        sw         x31, 132(sp)                                \n");
+    ASM("# Save context                                                 \n"
+        "        addi        sp,     sp,   -132                         \n"
+        "        sw          x1,   4(sp)                                \n"
+        "        sw          x2,   8(sp)                                \n"
+        "        sw          x3,  12(sp)                                \n"     // we don't save x4 (tp) because it can change across context switches and it is not ment be used by the compiler at application-level.
+        "        sw          x5,  16(sp)                                \n"
+        "        sw          x6,  20(sp)                                \n"
+        "        sw          x7,  24(sp)                                \n"
+        "        sw          x8,  28(sp)                                \n"
+        "        sw          x9,  32(sp)                                \n"
+        "        sw         x10,  36(sp)                                \n"
+        "        sw         x11,  40(sp)                                \n"
+        "        sw         x12,  44(sp)                                \n"
+        "        sw         x13,  48(sp)                                \n"
+        "        sw         x14,  52(sp)                                \n"
+        "        sw         x15,  56(sp)                                \n"
+        "        sw         x16,  60(sp)                                \n"
+        "        sw         x17,  64(sp)                                \n"
+        "        sw         x18,  68(sp)                                \n"
+        "        sw         x19,  72(sp)                                \n"
+        "        sw         x20,  76(sp)                                \n"
+        "        sw         x21,  80(sp)                                \n"
+        "        sw         x22,  84(sp)                                \n"
+        "        sw         x23,  88(sp)                                \n"
+        "        sw         x24,  92(sp)                                \n"
+        "        sw         x25,  96(sp)                                \n"
+        "        sw         x26, 100(sp)                                \n"
+        "        sw         x27, 104(sp)                                \n"
+        "        sw         x28, 108(sp)                                \n"
+        "        sw         x29, 112(sp)                                \n"
+        "        sw         x30, 116(sp)                                \n"
+        "        sw         x31, 120(sp)                                \n");
+if(sup)
+    ASM("        csrr       x31, sstatus                                \n"
+        "        sw         x31, 124(sp)                                \n"
+        "        csrr       x31, sepc                                   \n"
+        "        sw         x31, 128(sp)                                \n");
+else
+    ASM("        csrr       x31, mstatus                                \n"
+        "        sw         x31, 124(sp)                                \n"
+        "        csrr       x31, mepc                                   \n"
+        "        sw         x31, 128(sp)                                \n");
 
-    Reg id = CPU::mcause();
-    if(id & CLINT::INTERRUPT) {
-        if ((id & IC::INT_MASK) == CLINT::IRQ_MAC_SOFT) {
-            IC::ipi_eoi(id & IC::INT_MASK);
-        }
-        if ((id & IC::INT_MASK) == CLINT::IRQ_MAC_TIMER) {
-            Timer::reset();
-            CPU::sie(CPU::STI);
-        }
-        Reg interrupt_id = 1 << ((id & IC::INT_MASK) - 2);
-        if (CPU::int_enabled() && (CPU::sie() & (interrupt_id))) {
-            CPU::mip(interrupt_id); // Mandar pro supervisor
-        }
-    }
+    ASM("        la          ra, .restore                               \n" // set LR to restore context before returning
+        "        j          %0                                          \n"
+        "                                                               \n"
+        "# Restore context                                              \n"
+        ".restore:                                                      \n"
+        "        lw          x1,   4(sp)                                \n"
+        "        lw          x2,   8(sp)                                \n"
+        "        lw          x3,  12(sp)                                \n"
+        "        lw          x5,  16(sp)                                \n"
+        "        lw          x6,  20(sp)                                \n"
+        "        lw          x7,  24(sp)                                \n"
+        "        lw          x8,  28(sp)                                \n"
+        "        lw          x9,  32(sp)                                \n"
+        "        lw         x10,  36(sp)                                \n"
+        "        lw         x11,  40(sp)                                \n"
+        "        lw         x12,  44(sp)                                \n"
+        "        lw         x13,  48(sp)                                \n"
+        "        lw         x14,  52(sp)                                \n"
+        "        lw         x15,  56(sp)                                \n"
+        "        lw         x16,  60(sp)                                \n"
+        "        lw         x17,  64(sp)                                \n"
+        "        lw         x18,  68(sp)                                \n"
+        "        lw         x19,  72(sp)                                \n"
+        "        lw         x20,  76(sp)                                \n"
+        "        lw         x21,  80(sp)                                \n"
+        "        lw         x22,  84(sp)                                \n"
+        "        lw         x23,  88(sp)                                \n"
+        "        lw         x24,  92(sp)                                \n"
+        "        lw         x25,  96(sp)                                \n"
+        "        lw         x26, 100(sp)                                \n"
+        "        lw         x27, 104(sp)                                \n"
+        "        lw         x28, 108(sp)                                \n"
+        "        lw         x29, 112(sp)                                \n"
+        "        lw         x30, 116(sp)                                \n" : : "i"(&dispatch));
+if(sup)
+    ASM("        lw         x31, 124(sp)                                \n"
+        "        csrw   sstatus, x31                                    \n"
+        "        lw         x31, 128(sp)                                \n"
+        "        csrw      sepc, x31                                    \n");
+else
+    ASM("        lw         x31, 124(sp)                                \n"
+        "        csrw   mstatus, x31                                    \n"
+        "        lw         x31, 128(sp)                                \n"
+        "        csrw      mepc, x31                                    \n");
 
-    ASM("        la          ra, .restore                               \n");
-    ASM("        j          %0                                          \n" : : "i"(&dispatch));
-    ASM(".restore:                                                      \n");
-    ASM("        lw          x1,   4(sp)                                \n");
-    ASM("        lw          x2,   8(sp)                                \n");
-    ASM("        lw          x3,  12(sp)                                \n");
-    ASM("        lw          x4,  16(sp)                                \n");
-    ASM("        lw          x5,  20(sp)                                \n");
-    ASM("        lw          x6,  24(sp)                                \n");
-    ASM("        lw          x7,  28(sp)                                \n");
-    ASM("        lw          x8,  32(sp)                                \n");
-    ASM("        lw          x9,  36(sp)                                \n");
-    ASM("        lw         x10,  40(sp)                                \n");
-    ASM("        lw         x11,  44(sp)                                \n");
-    ASM("        lw         x12,  48(sp)                                \n");
-    ASM("        lw         x13,  52(sp)                                \n");
-    ASM("        lw         x14,  56(sp)                                \n");
-    ASM("        lw         x15,  60(sp)                                \n");
-    ASM("        lw         x16,  64(sp)                                \n");
-    ASM("        lw         x17,  68(sp)                                \n");
-    ASM("        lw         x18,  72(sp)                                \n");
-    ASM("        lw         x19,  76(sp)                                \n");
-    ASM("        lw         x20,  80(sp)                                \n");
-    ASM("        lw         x21,  84(sp)                                \n");
-    ASM("        lw         x22,  88(sp)                                \n");
-    ASM("        lw         x23,  92(sp)                                \n");
-    ASM("        lw         x24,  96(sp)                                \n");
-    ASM("        lw         x25, 100(sp)                                \n");
-    ASM("        lw         x26, 104(sp)                                \n");
-    ASM("        lw         x27, 108(sp)                                \n");
-    ASM("        lw         x28, 112(sp)                                \n");
-    ASM("        lw         x29, 116(sp)                                \n");
-    ASM("        lw         x30, 120(sp)                                \n");
-    ASM("        lw         x31, 128(sp)                                \n");
-    ASM("        csrw   sstatus, x31                                    \n");
-    ASM("        lw         x31, 132(sp)                                \n");
-    ASM("        csrw      sepc, x31                                    \n");
-    ASM("        lw         x31, 124(sp)                                \n");
-    ASM("        addi        sp, sp,    136                             \n");
+    ASM("        lw         x31, 120(sp)                                \n"
+        "        addi        sp, sp,    132                             \n");
+if(sup)
     ASM("        sret                                                   \n");
+else
+    ASM("        mret                                                   \n");
 }
 
 void IC::dispatch()
@@ -121,9 +117,20 @@ void IC::dispatch()
     if((id != INT_SYS_TIMER) || Traits<IC>::hysterically_debugged)
         db<IC>(TRC) << "IC::dispatch(i=" << id << ")" << endl;
 
-    // IPIs must be acknowledged before calling the ISR, because in RISC-V, set bits will keep on triggering interrupts until they are cleared
-    if(id == INT_RESCHEDULER)
-        IC::ipi_eoi(id);
+    if(sup) {
+        if (id == INT_RESCHEDULER)
+            CPU::sipc(CPU::SSI);
+
+        if(id == INT_SYS_TIMER)
+            CPU::siec(CPU::STI);
+    } else {
+        if (id == INT_RESCHEDULER)
+            IC::ipi_eoi(id);
+
+        // MIP.MTI is a direct logic on (MTIME == MTIMECMP) and reseting the Timer clears it
+        if(id == INT_SYS_TIMER)
+            Timer::reset();
+    }
 
     _int_vector[id](id);
 }
@@ -139,46 +146,43 @@ void IC::int_not(Interrupt_Id id)
 
 void IC::exception(Interrupt_Id id)
 {
-    CPU::Reg mstatus = CPU::mstatus();
-    CPU::Reg mcause = CPU::mcause();
-    CPU::Reg mhartid = CPU::id();
-    CPU::Reg mepc;
-    ASM("csrr %0, mepc" : "=r"(mepc) : :);
-    CPU::Reg sepc;
-    ASM("csrr %0, sepc" : "=r"(sepc) : :);
-    CPU::Reg mtval;
-    ASM("csrr %0, mtval" : "=r"(mtval) : :);
+    CPU::Reg status = sup ? CPU::sstatus() : CPU::mstatus();
+    CPU::Reg cause = sup? CPU::scause() : CPU::mcause();
+    CPU::Reg hartid = CPU::id();
+    CPU::Reg epc = sup ? CPU::sepc() : CPU::mepc();
+    CPU::Reg tval = sup ? CPU::stval() : CPU::mtval();
+    CPU::Reg sp = CPU::sp();
 
-    db<IC>(WRN) << "IC::Exception(" << id << ") => {" << hex << "mstatus=" << mstatus << ",mcause=" << mcause << ",mhartid=" << mhartid << ",mepc=" << hex << mepc << ",sepc=" << sepc << ",mtval=" << mtval << "}" << dec;
+    db<IC,System>(WRN) << "IC::Exception(" << id << ") => {" << hex << "status=" << status << ",cause=" << cause << ",hartid=" << hartid << ",epc=" << epc << ",tval=" << tval << ",sp=" << sp << "}" << dec;
 
     switch(id) {
         case 0: // unaligned Instruction
         case 1: // instruction access failure
-            db<IC>(WRN) << " => prefetch abort";
+            db<IC, System>(WRN) << " => prefetch abort";
             break;
         case 2: // illegal instruction
-            db<IC>(WRN) << " => illegal instruction";
+            db<IC, System>(WRN) << " => illegal instruction";
             break;
         case 3: // Break Point
-            db<IC>(WRN) << " => break point";
+            db<IC, System>(WRN) << " => break point";
             break;
         case 4: // unaligned load address
         case 5: // load access failure
         case 6: // unaligned store address
         case 7: // store access failure
-            db<IC>(WRN) << " => unaligned data";
+            db<IC, System>(WRN) << " => data error (unaligned)";
             break;
         case 8: // user-mode environment call
         case 9: // supervisor-mode environment call
         case 10: // reserved... not described
         case 11: // machine-mode environment call
-            db<IC>(WRN) << " => reserved";
+            db<IC, System>(WRN) << " => reserved";
             break;
         case 12: // Instruction Page Table failure
         case 13: // Load Page Table failure
         case 14: // reserved... not described
         case 15: // Store Page Table failure
-            db<IC>(WRN) << " => data abort";
+            db<IC, System>(WRN) << " => data abort";
             break;
         default:
             int_not(id);
@@ -186,9 +190,9 @@ void IC::exception(Interrupt_Id id)
     }
 
     if(Traits<Build>::hysterically_debugged)
-        db<IC>(ERR) << endl;
+        db<IC, System>(ERR) << endl;
     else
-        db<IC>(WRN) << endl;
+        db<IC, System>(WRN) << endl;
 }
 
 __END_SYS

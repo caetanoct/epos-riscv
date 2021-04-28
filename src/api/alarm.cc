@@ -11,9 +11,6 @@ Alarm_Timer * Alarm::_timer;
 volatile Alarm::Tick Alarm::_elapsed;
 Alarm::Queue Alarm::_request;
 
-inline void Alarm::lock() { Thread::lock(); }
-inline void Alarm::unlock() { Thread::unlock(); }
-
 Alarm::Alarm(const Microsecond & time, Handler * handler, unsigned int times)
 : _time(time), _handler(handler), _times(times), _ticks(ticks(time)), _link(this, _ticks)
 {
@@ -30,7 +27,6 @@ Alarm::Alarm(const Microsecond & time, Handler * handler, unsigned int times)
         (*handler)();
     }
 }
-
 
 Alarm::~Alarm()
 {

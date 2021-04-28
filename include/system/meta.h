@@ -214,12 +214,12 @@ public:
 inline void SERIALIZE(char * buf, int index) {}
 
 template<typename T>
-void SERIALIZE(char * buf, int index, T && a) {
+void SERIALIZE(char * buf, int index, const T & a) {
     __builtin_memcpy(&buf[index], &a, sizeof(T));
 }
 
 template<typename T, typename ... Tn>
-void SERIALIZE(char * buf, int index, const T && a, Tn & ... an) {
+void SERIALIZE(char * buf, int index, const T & a, const Tn & ... an) {
     __builtin_memcpy(&buf[index], &a, sizeof(T));
     SERIALIZE(buf, index + sizeof(T), an ...);
 }

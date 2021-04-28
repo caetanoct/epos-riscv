@@ -1,0 +1,139 @@
+Setup(bi=0x87000000,sp=0x80ffbf6c)
+Setup:si={
+Boot_Map={n_cpus=1,mem_base=0x80000000,mem_top=0x87ffffff,io_base=0x00000000,io_
+top=0x1fffffff,node_id=-1,space=(-1,-1,-1),uuid=0x80006400,img_size=277744,setup
+_offset=0,init_offset=0xbe4c,system_offset=0x16f78,application_offset=0x3ea64,ex
+tras_offset=0xffffffff}
+Physical_Memory_Map={sys_info=0x00000000,sys_pt=0x00000000,sys_pd=0x00000000,phy
+_mem_pts=0x00000000,io_pts=0x00000000,usr_mem_base=0x00000000,usr_mem_top=0x0000
+0000,sys_code=0x00000000,sys_data=0x00000000,sys_stack=0x00000000,app_code=0x000
+00000,app_data=0x00000000,app_extra=0x00000000,free1_base=0x00000000,free1_top=0
+x00000000,free2_base=0x00000000,free2_top=0x00000000}
+Load_Map={has_stp=0,has_ini=0,has_sys=0,has_app=0,has_ext=0,stp_entry=0x00000000
+,stp_segments=0,stp_code={b=0x00000000,s=0},stp_data={b=0x00000000,s=0},ini_entr
+y=0x00000000,ini_segments=0,ini_code={b=0x00000000,s=0},ini_data={b=0x00000000,s
+=0},sys_entry=0x00000000,sys_segments=0,sys_code={b=0x00000000,s=0},sys_data={b=
+0x00000000,s=0},sys_stack=0x00000000,app_entry=0x00000000,app_segments=0,app_cod
+e={b=0x00000000,s=0},app_data={b=0x00000000,s=0},app_stack=0x00000000,app_heap=0
+x00000000,app_extra={b=0x00000000,s=0}}}
+Setup::build_lm()
+APP ELF image has no data segment!
+Setup::build_pmm()
+Setup::setup_m2s()
+Setup::say_hi()
+System_Info={
+Boot_Map={n_cpus=1,mem_base=0x80000000,mem_top=0x87ffffff,io_base=0x00000000,io_
+top=0x1fffffff,node_id=-1,space=(-1,-1,-1),uuid=0x80006400,img_size=277744,setup
+_offset=0,init_offset=0xbe4c,system_offset=0x16f78,application_offset=0x3ea64,ex
+tras_offset=0xffffffff}
+Physical_Memory_Map={sys_info=0x87ffe000,sys_pt=0x87ffd000,sys_pd=0x87ffc000,phy
+_mem_pts=0x87fdc000,io_pts=0x87f5c000,usr_mem_base=0x80000000,usr_mem_top=0x87f3
+7000,sys_code=0x87f3c000,sys_data=0x87f3b000,sys_stack=0x87f37000,app_code=0x000
+00000,app_data=0x00000000,app_extra=0x00000000,free1_base=0x80c04000,free1_top=0
+x87f37000,free2_base=0x00000000,free2_top=0x00000000}
+Load_Map={has_stp=1,has_ini=1,has_sys=1,has_app=1,has_ext=0,stp_entry=0x80000000
+,stp_segments=2,stp_code={b=0x80000000,s=25884},stp_data={b=0xffffffff,s=0},ini_
+entry=0x87f00000,ini_segments=2,ini_code={b=0x87f00000,s=33480},ini_data={b=0xff
+ffffff,s=0},sys_entry=0xff800000,sys_segments=3,sys_code={b=0xff800000,s=131072}
+,sys_data={b=0xff903000,s=380},sys_stack=0xffa00000,app_entry=0x80400040,app_seg
+ments=2,app_code={b=0x80400000,s=20544},app_data={b=0x80800000,s=4210688},app_st
+ack=0x80800000,app_heap=0x80804000,app_extra={b=0x00000000,s=0}}}
+
+Setting up this machine as follows: 
+  Processor:    1 x RV32 at 50 MHz (BUS clock = 50 MHz)
+  Memory:       131071 KB [0x80000000:0x87ffffff]
+  User memory:  130268 KB [0x80000000:0x87f37000]
+  I/O space:    524287 KB [0x00000000:0x1fffffff]
+  Node Id:      will get from the network!
+  Position:     will get from the network!
+  Setup:        25884 bytes
+  Init:         33480 bytes
+  OS code:      131072 bytes	data: 380 bytes	   stack: 16384 bytes
+
+  APP code:     20544 bytes	data: 4210688 bytes
+
+Setup::setup_sys_pt(pmm={pt=0x87ffd000,pd=0x87ffc000,si=0x87ffe000,sysc={b=0x87f
+3c000,s=32},sysd={b=0x87f3b000,s=1},syss={b=0x87f37000,s=4}})
+SYS_SPT={
+[0]=0x87f3c000  [1]=0x87f3d000  [2]=0x87f3e000  [3]=0x87f3f000  
+[4]=0x87f40000  [5]=0x87f41000  [6]=0x87f42000  [7]=0x87f43000  
+[8]=0x87f44000  [9]=0x87f45000  [10]=0x87f46000  [11]=0x87f47000  
+[12]=0x87f48000  [13]=0x87f49000  [14]=0x87f4a000  [15]=0x87f4b000  
+[16]=0x87f4c000  [17]=0x87f4d000  [18]=0x87f4e000  [19]=0x87f4f000  
+[20]=0x87f50000  [21]=0x87f51000  [22]=0x87f52000  [23]=0x87f53000  
+[24]=0x87f54000  [25]=0x87f55000  [26]=0x87f56000  [27]=0x87f57000  
+[28]=0x87f58000  [29]=0x87f59000  [30]=0x87f5a000  [31]=0x87f5b000  
+[256]=0x87ffe000  [257]=0x87ffd000  [258]=0x87ffc000  [259]=0x87f3b000  
+[512]=0x87f37000  [513]=0x87f38000  [514]=0x87f39000  [515]=0x87f3a000  
+
+}
+setup_sys_pd(bm={memb=0x80000000,memt=0x87ffffff,miob=0x00000000,miot=0x1fffffff
+{si=0x87ffe000,spt=0x87ffd000,spd=0x87ffc000,mem=0x87fdc000,io=0x87f5c000,umemb=
+0x80000000,umemt=0x87f37000,sysc=0x87f3c000,sysd=0x87f3b000,syss=0x87f37000,apct
+=0x00000000,apdt=0x00000000,fr1b=0x80c04000,fr1t=0x87f37000,fr2b=0x00000000,fr2t
+=0x00000000})
+SYS_PD={
+[0]=0x87f5c000  [1]=0x87f5d000  [2]=0x87f5e000  [3]=0x87f5f000  
+[4]=0x87f60000  [5]=0x87f61000  [6]=0x87f62000  [7]=0x87f63000  
+[8]=0x87f64000  [9]=0x87f65000  [10]=0x87f66000  [11]=0x87f67000  
+[12]=0x87f68000  [13]=0x87f69000  [14]=0x87f6a000  [15]=0x87f6b000  
+[16]=0x87f6c000  [17]=0x87f6d000  [18]=0x87f6e000  [19]=0x87f6f000  
+[20]=0x87f70000  [21]=0x87f71000  [22]=0x87f72000  [23]=0x87f73000  
+[24]=0x87f74000  [25]=0x87f75000  [26]=0x87f76000  [27]=0x87f77000  
+[28]=0x87f78000  [29]=0x87f79000  [30]=0x87f7a000  [31]=0x87f7b000  
+[32]=0x87f7c000  [33]=0x87f7d000  [34]=0x87f7e000  [35]=0x87f7f000  
+[36]=0x87f80000  [37]=0x87f81000  [38]=0x87f82000  [39]=0x87f83000  
+[40]=0x87f84000  [41]=0x87f85000  [42]=0x87f86000  [43]=0x87f87000  
+[44]=0x87f88000  [45]=0x87f89000  [46]=0x87f8a000  [47]=0x87f8b000  
+[48]=0x87f8c000  [49]=0x87f8d000  [50]=0x87f8e000  [51]=0x87f8f000  
+[52]=0x87f90000  [53]=0x87f91000  [54]=0x87f92000  [55]=0x87f93000  
+[56]=0x87f94000  [57]=0x87f95000  [58]=0x87f96000  [59]=0x87f97000  
+[60]=0x87f98000  [61]=0x87f99000  [62]=0x87f9a000  [63]=0x87f9b000  
+[64]=0x87f9c000  [65]=0x87f9d000  [66]=0x87f9e000  [67]=0x87f9f000  
+[68]=0x87fa0000  [69]=0x87fa1000  [70]=0x87fa2000  [71]=0x87fa3000  
+[72]=0x87fa4000  [73]=0x87fa5000  [74]=0x87fa6000  [75]=0x87fa7000  
+[76]=0x87fa8000  [77]=0x87fa9000  [78]=0x87faa000  [79]=0x87fab000  
+[80]=0x87fac000  [81]=0x87fad000  [82]=0x87fae000  [83]=0x87faf000  
+[84]=0x87fb0000  [85]=0x87fb1000  [86]=0x87fb2000  [87]=0x87fb3000  
+[88]=0x87fb4000  [89]=0x87fb5000  [90]=0x87fb6000  [91]=0x87fb7000  
+[92]=0x87fb8000  [93]=0x87fb9000  [94]=0x87fba000  [95]=0x87fbb000  
+[96]=0x87fbc000  [97]=0x87fbd000  [98]=0x87fbe000  [99]=0x87fbf000  
+[100]=0x87fc0000  [101]=0x87fc1000  [102]=0x87fc2000  [103]=0x87fc3000  
+[104]=0x87fc4000  [105]=0x87fc5000  [106]=0x87fc6000  [107]=0x87fc7000  
+[108]=0x87fc8000  [109]=0x87fc9000  [110]=0x87fca000  [111]=0x87fcb000  
+[112]=0x87fcc000  [113]=0x87fcd000  [114]=0x87fce000  [115]=0x87fcf000  
+[116]=0x87fd0000  [117]=0x87fd1000  [118]=0x87fd2000  [119]=0x87fd3000  
+[120]=0x87fd4000  [121]=0x87fd5000  [122]=0x87fd6000  [123]=0x87fd7000  
+[124]=0x87fd8000  [125]=0x87fd9000  [126]=0x87fda000  [127]=0x87fdb000  
+[128]=0x87fdc000  [129]=0x87fdd000  [130]=0x87fde000  [131]=0x87fdf000  
+[132]=0x87fe0000  [133]=0x87fe1000  [134]=0x87fe2000  [135]=0x87fe3000  
+[136]=0x87fe4000  [137]=0x87fe5000  [138]=0x87fe6000  [139]=0x87fe7000  
+[140]=0x87fe8000  [141]=0x87fe9000  [142]=0x87fea000  [143]=0x87feb000  
+[144]=0x87fec000  [145]=0x87fed000  [146]=0x87fee000  [147]=0x87fef000  
+[148]=0x87ff0000  [149]=0x87ff1000  [150]=0x87ff2000  [151]=0x87ff3000  
+[152]=0x87ff4000  [153]=0x87ff5000  [154]=0x87ff6000  [155]=0x87ff7000  
+[156]=0x87ff8000  [157]=0x87ff9000  [158]=0x87ffa000  [159]=0x87ffb000  
+[512]=0x20770000  [513]=0x20774000  [514]=0x20778000  [515]=0x2077c000  
+[516]=0x20780000  [517]=0x20784000  [518]=0x20788000  [519]=0x2078c000  
+[520]=0x20790000  [521]=0x20794000  [522]=0x20798000  [523]=0x2079c000  
+[524]=0x207a0000  [525]=0x207a4000  [526]=0x207a8000  [527]=0x207ac000  
+[528]=0x207b0000  [529]=0x207b4000  [530]=0x207b8000  [531]=0x207bc000  
+[532]=0x207c0000  [533]=0x207c4000  [534]=0x207c8000  [535]=0x207cc000  
+[536]=0x207d0000  [537]=0x207d4000  [538]=0x207d8000  [539]=0x207dc000  
+[540]=0x207e0000  [541]=0x207e4000  [542]=0x207e8000  [543]=0x207ec000  
+[1022]=0x87ffd000  
+}
+Setup::enable_paging()
+pc=0x80002792
+sp=0x80ffbf0c
+pc=0x80002822
+sp=0x80ffbf0c
+Setup::load_parts()
+4287627264
+translate:{addr=0xff900000,pd=0x87ffc000,pd[1022]=0x21fff401,pt=0x87ffd000,pt[25
+6]=0x21fff80f,f=0x87ffe000,*addr=0}
+Setup::load_init()
+Setup::ini_elf: {addr=0x8700be4c,pd=0x87ffc000,pd[540]=0x881f800f,pt=0x207e0000,
+pt[11]=0x00000000,f=0x00000000,*addr=0x464c457f}
+Setup::ini_elf[0]: {addr=0x87f00000,pd=0x87ffc000,pd[543]=0x881fb00f,pt=0x207ec0
+00,pt[768]=0x00000000,f=0x00000000,*addr=

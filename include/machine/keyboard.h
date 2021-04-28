@@ -16,7 +16,7 @@ protected:
 
 class Serial_Keyboard: public Keyboard_Common
 {
-    friend class PC_Setup;
+    friend class Setup;
     friend class Machine;
 
 public:

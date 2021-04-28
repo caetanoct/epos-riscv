@@ -21,9 +21,9 @@ public:
 
         // Initialize Application's heap
         db<Init>(INF) << "Initializing application's heap: " << endl;
-        if(Traits<System>::multiheap) { // heap in data segment arranged by SETUP
+        if(Traits<System>::multiheap) {
             char * heap = MMU::align_page(&_end);
-            if(Traits<Build>::MODE != Traits<Build>::KERNEL) // if not a kernel, then use the stack allocated by SETUP, otherwise make that part of the heap
+            if (Traits<Build>::MODE != Traits<Build>::KERNEL)
                 heap += MMU::align_page(Traits<Application>::STACK_SIZE);
             Application::_heap = new (&Application::_preheap[0]) Heap(heap, HEAP_SIZE);
         } else

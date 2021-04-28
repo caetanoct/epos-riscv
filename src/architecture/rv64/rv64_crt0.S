@@ -1,6 +1,6 @@
-// EPOS RISC-V Program Starter
+// EPOS RISC-V 64 Program Starter
 
-        .file "riscv64_crt0.S"
+        .file "rv64_crt0.S"
 
         // Entry point called by SETUP for processors
         .section .text
@@ -10,7 +10,10 @@
 _start:
         // Temporary stack(s) for INIT are created and configure by SETUP
 
-        // Set all bytes in the BSS section to zero.
+        // Only hart (core) 0 cleans cache
+        mv      t0, tp
+        bnez    t0, 2f
+
         // Set all bytes in the BSS section to zero.
         la      a0, __bss_start
         la      a1, _end

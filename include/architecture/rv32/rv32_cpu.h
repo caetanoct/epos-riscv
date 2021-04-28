@@ -1,7 +1,7 @@
 // EPOS RISC-V 32 CPU Mediator Declarations
 
-#ifndef __riscv32_h
-#define __riscv32_h
+#ifndef __rv32_h
+#define __rv32_h
 
 #include <architecture/cpu.h>
 
@@ -14,6 +14,7 @@ class CPU: protected CPU_Common
 
 private:
     static const bool smp = Traits<System>::multicore;
+    static const bool sup = Traits<System>::multitask;
 
 public:
     // CPU Native Data Types
@@ -33,10 +34,13 @@ public:
         SIE             = 1 << 1,      // Supervisor Interrupts Enabled
         SPIE            = 1 << 5,      // Supervisor Previous Interrupts Enabled
         MPIE            = 1 << 7,      // Machine Previous Interrupts Enabled
-        MPP             = 3 << 11,     // Machine Previous Privilege = Machine
+        MPP             = 3 << 11,     // Machine Previous Privilege
+        MPP_M           = 3 << 11,     // Machine Previous Privilege = Machine
         MPP_S           = 1 << 11,     // Machine Previous Privilege = Supervisor
-        // SPP             = 3 << 12,  // Supervisor Previous Privilege = Machine
+        MPP_U           = 0 << 11,     // Machine Previous Privilege = User
+        SPP             = 1 << 8,      // Supervisor Previous Privilege
         SPP_S           = 1 << 8,      // Supervisor Previous Privilege = Supervisor
+        SPP_U           = 0 << 8,      // Supervisor Previous Privilege = User
         MPRV            = 1 << 17,     // Memory Priviledge
         TVM             = 1 << 20      // Trap Virtual Memory //not allow MMU
     };
@@ -45,8 +49,8 @@ public:
     enum {
         SSI             = 1 << 1,   // Supervisor Software Interrupt
         MSI             = 1 << 3,   // Machine Software Interrupt
-        STI             = 1 << 5,   // Supervisor Software Interrupt
-        MTI             = 1 << 7,   // Machine Software Interrupt
+        STI             = 1 << 5,   // Supervisor Timer Interrupt
+        MTI             = 1 << 7,   // Machine Timer Interrupt
         SEI             = 1 << 9,   // Supervisor External Interrupt
         MEI             = 1 << 11   // Machine External Interrupt
     };
@@ -64,8 +68,8 @@ public:
         EXC_DWFAULT     = 7,    // Store/AMO access fault
         EXC_ENVU        = 8,    // Environment call from U-mode
         EXC_ENVS        = 9,    // Environment call from S-mode
-        // EXC_ENVH        = 10,// Environment call from H-mode
-        EXC_ENVM        = 11    // Environment call from M-m
+        EXC_ENVH        = 10,   // Environment call from H-mode
+        EXC_ENVM        = 11    // Environment call from M-mode
     };
 
     // Context
@@ -73,7 +77,7 @@ public:
     {
     public:
         // Contexts are loaded with mret, which gets pc from mepc and updates some bits of mstatus, that's why _st is initialized with MPIE and MPP
-        Context(const Log_Addr & entry, const Log_Addr & exit): _st(SPIE | SPP_S), _pc(entry), _x1(exit) {
+        Context(const Log_Addr & entry, const Log_Addr & exit): _st(sup ? (SPIE | SPP_S) : (MPIE | MPP_M)), _pc(entry), _x1(exit) {
             if(Traits<Build>::hysterically_debugged || Traits<Thread>::trace_idle) {
                                                                         _x5 =  5;  _x6 =  6;  _x7 =  7;  _x8 =  8;  _x9 =  9;
                 _x10 = 10; _x11 = 11; _x12 = 12; _x13 = 13; _x14 = 14; _x15 = 15; _x16 = 16; _x17 = 17; _x18 = 18; _x19 = 19;
@@ -89,7 +93,7 @@ public:
             db << hex
                << "{sp="   << &c
                << ",st="   << c._st
-			   << ",pc="   << c._pc
+               << ",pc="   << c._pc
                << ",lr="   << c._x1
                << ",x5="   << c._x5
                << ",x6="   << c._x6
@@ -168,54 +172,42 @@ public:
 public:
     CPU() {};
 
-public:
-    static Reg32 flags() { return mstatus(); }
-    static void flags(const Flags st) { mstatus(st); }
+    static Reg32 flags() { return sup ? sstatus() : mstatus(); }
+    static void flags(const Flags st) { sup ? sstatus(st) : mstatus(st); }
 
-    static Reg32 tp() {
-        Reg32 value;
-        ASM("mv %0, tp" : "=r"(value) :);
-        return value;
-    }
+    static Reg32 sp()      { Reg32 r; ASM("mv %0, sp" :  "=r"(r) :); return r; }
+    static void sp(const Reg32 & r) { ASM("mv sp, %0" : : "r"(r) :); }
 
-    static void tp(const Reg32 & tp) {
-        ASM("mv tp, %0" : : "r"(tp) :);
-    }
+    static Reg32 fr() { Reg32 r;      ASM("mv %0, a0" :  "=r"(r)); return r; }
+    static void fr(const Reg32 & r) { ASM("mv a0, %0" : : "r"(r) :); }
 
-    static Reg32 sp() {
-        Reg32 value;
-        ASM("mv %0, sp" : "=r"(value) :);
-        return value;
-    }
-    static void sp(const Reg32 & sp) {
-        ASM("mv sp, %0" : : "r"(sp) :);
-    }
+    static Log_Addr ip() { Reg32 r; ASM("auipc %0, 0" : "=r"(r) :); return r; }
 
-    static Reg32 fr() {
-        Reg32 value;
-        ASM("mv %0, x10" : "=r"(value)); // x10 is a0
-        return value;
-    }
-    static void fr(const Reg32 & fr) {
-        ASM("mv x10, %0" : : "r"(fr) :); // x10 is a0
-    }
+    static Reg32 pdp() { return sup ? (satp() << 12) : 0; }
+    static void pdp(Reg32 pdp) { if(sup) satp((1 << 31) | (pdp >> 12)); }
 
-    static Log_Addr ip() {
-        Reg32 value;
-        ASM("mv %0, pc" : "=r"(value) :);
-        return value;
-    }
+    static unsigned int id() { return sup ? tp() : mhartid(); }
 
-    static Reg32 pdp() { 
-        Reg32 value;
-        ASM("csrr %0, satp" : "=r"(value) : : );
-        return value;
-    }
+    static unsigned int cores() { return Traits<Build>::CPUS; }
 
-    static void pdp(const Reg32 & pdp) {}
+    using CPU_Common::clock;
+    using CPU_Common::min_clock;
+    using CPU_Common::max_clock;
 
+    static void int_enable() { sup ? sstatuss(SIE) : mstatuss(MIE); }
+    static void int_disable() { sup ? sstatusc(SIE) : mstatusc(MIE); }
+    static bool int_enabled() { return sup ? (sstatus() & SIE) : (mstatus() & MIE) ; }
+    static bool int_disabled() { return !int_enabled(); }
 
-    // Atomic operations
+    static void halt() { ASM("wfi"); }
+
+    static void fpu_save();
+    static void fpu_restore();
+    static void switch_context(Context ** o, Context * n) __attribute__ ((naked));
+
+    static int syscall(void * message);
+    static void syscalled();
+
     template<typename T>
     static T tsl(volatile T & lock) {
         register T old;
@@ -257,195 +249,7 @@ public:
         return old;
     }
 
-    using CPU_Common::clock;
-    using CPU_Common::min_clock;
-    using CPU_Common::max_clock;
-
-    static void halt() { ASM("wfi"); }
-
-    static unsigned int id() {
-        // !SMODE
-        return 0;
-    }
-
-    static unsigned int mhartid() {
-        int id;
-        ASM("csrr %0, mhartid" : "=r"(id) : : "memory", "cc");
-        return id & 0x3;
-    }
-
-    static void mstatus(Reg value) {
-        ASM("csrs mstatus, %0" : : "r"(value) : "cc");
-    }
-
-    static void mstatus_write(Reg value) {
-        ASM("csrw mstatus, %0" : : "r"(value) : "cc");
-    }
-
-    static void mstatus_clear(Reg value) {
-        ASM("csrc mstatus, %0" : : "r"(value) : "cc");
-    }
-
-    static Reg mstatus() {
-        Reg value;
-        ASM("csrr %0, mstatus" : "=r"(value) : : );
-        return value;
-    }
-
-    static Reg sstatus() {
-        Reg value;
-        ASM("csrr %0, sstatus" : "=r"(value) : : );
-        return value;
-    }
-
-    static Reg rdtime() {
-        Reg value;
-        ASM("rdtime %0" : "=r"(value) : : );
-        return value;
-    }
-
-    static void mepc(Reg value) {
-        ASM("csrw mepc, %0" : : "r"(value) : "cc");
-    }
-
-    static void mtvec(Reg value) {
-        ASM("csrw mtvec, %0" : : "r"(value) : "cc");
-    }
-
-    static void mie(Reg value) {
-        ASM("csrs mie, %0" : : "r"(value) : "cc");
-    }
-
-    static void mie_clear(Reg value) {
-        ASM("csrc mie, %0" : : "r"(value) : "cc");
-    }
-
-    static void mie_write(Reg value) {
-        ASM("csrw mie, %0" : : "r"(value) : "cc");
-    }
-
-    static Reg mie() {
-        Reg value;
-        ASM("csrr %0, mie" : "=r"(value) : : );
-        return value;
-    }
-
-    static void mip(Reg value) {
-        ASM("csrs mip, %0" : : "r"(value) : "cc");
-    }
-
-    static void mip_write(Reg value) {
-        ASM("csrw mip, %0" : : "r"(value) : "cc");
-    }
-
-    static void mip_clear(Reg value) {
-        ASM("csrc mip, %0" : : "r"(value) : "cc");
-    }
-
-    static Reg mcause() {
-        Reg value;
-        ASM("csrr %0, mcause" : "=r"(value) : : );
-        return value;
-    }
-
-    static Reg scause() {
-        Reg value;
-        ASM("csrr %0, scause" : "=r"(value) : : );
-        return value;
-    }
-
-    static void satp(Reg value) {
-        ASM("csrw satp, %0" : : "r"(value) : "cc");
-    }
-
-    static void satp_write(Reg value) {
-        ASM("csrw satp, %0" : : "r"(value) : "cc");
-    }
-
-    static void mideleg_write(Reg value) {
-        ASM("csrw mideleg, %0" : : "r"(value) : "cc");
-    }
-
-    static void medeleg_write(Reg value) {
-        ASM("csrw medeleg, %0" : : "r"(value) : "cc");
-    }
-
-    static void sstatus_write(Reg value) {
-        ASM("csrw sstatus, %0" : : "r"(value) : "cc");
-    }
-
-    static void sie(Reg value) {
-        ASM("csrs sie, %0" : : "r"(value) : "cc");
-    }
-
-    static void sie_write(Reg value) {
-        ASM("csrw sie, %0" : : "r"(value) : "cc");
-    }
-
-    static void sie_clear(Reg value) {
-        ASM("csrc sie, %0" : : "r"(value) : "cc");
-    }
-
-    static Reg sie() {
-        Reg value;
-        ASM("csrr %0, sie" : "=r"(value) : : );
-        return value;
-    }
-
-    static void sip(Reg value) {
-        ASM("csrs sip, %0" : : "r"(value) : "cc");
-    }
-
-    static void sip_clear(Reg value) {
-        ASM("csrc sip, %0" : : "r"(value) : "cc");
-    }
-
-    static void stvec_write(Reg value) {
-        ASM("csrw stvec, %0" : : "r"(value) : "cc");
-    }
-
-    static void sepc_write(Reg value) {
-        ASM("csrw sepc, %0" : : "r"(value) : "cc");
-    }
-
-    static unsigned int cores() {
-        return Traits<Build>::CPUS;
-    }
-
     static void smp_barrier(unsigned long cores = cores()) { CPU_Common::smp_barrier<&finc>(cores, id()); }
-
-    static void mmode_int_disable() { ASM("csrc mstatus, %0" : :"r"(MIE)); }
-    static void int_enable() { ASM("csrs sstatus, %0" : :"r"(SIE)); }
-    static void int_disable() { ASM("csrc sstatus, %0" : :"r"(SIE)); }
-    static bool int_enabled() { return (sstatus() & SIE) ; }
-    static bool int_disabled() { return !int_enabled(); }
-
-    static void csrr31() { ASM("csrr x31, mstatus" : : : "x31"); }
-    static void csrw31() { ASM("csrs mstatus, x31" : : : "cc"); }
-
-    static unsigned int int_id() { return 0; }
-
-    static void fpu_save();
-    static void fpu_restore();
-    static void switch_context(Context ** o, Context * n) __attribute__ ((naked));
-
-    template<typename ... Tn>
-    static Context * init_stack(const Log_Addr & usp, Log_Addr sp, void (* exit)(), int (* entry)(Tn ...), Tn ... an) {
-        sp -= sizeof(Context);
-        Context * ctx = new(sp) Context(entry, exit);
-        init_stack_helper(&ctx->_x10, an ...); // x10 is a0
-        return ctx;
-    }
-    template<typename ... Tn>
-    static Log_Addr init_user_stack(Log_Addr sp, void (* exit)(), Tn ... an) {
-        sp -= sizeof(Context);
-        Context * ctx = new(sp) Context(0, exit);
-        init_stack_helper(&ctx->_x10, an ...); // x10 is a0
-        return sp;
-    }
-
-    static int syscall(void * message);
-    static void syscalled();
 
     using CPU_Common::htole64;
     using CPU_Common::htole32;
@@ -465,6 +269,117 @@ public:
     using CPU_Common::htons;
     using CPU_Common::ntohl;
     using CPU_Common::ntohs;
+
+    template<typename ... Tn>
+    static Context * init_stack(const Log_Addr & usp, Log_Addr sp, void (* exit)(), int (* entry)(Tn ...), Tn ... an) {
+        sp -= sizeof(Context);
+        Context * ctx = new(sp) Context(entry, exit);
+        init_stack_helper(&ctx->_x10, an ...); // x10 is a0
+        return ctx;
+    }
+    template<typename ... Tn>
+    static Log_Addr init_user_stack(Log_Addr sp, void (* exit)(), Tn ... an) {
+        sp -= sizeof(Context);
+        Context * ctx = new(sp) Context(0, exit);
+        init_stack_helper(&ctx->_x10, an ...); // x10 is a0
+        return sp;
+    }
+
+public:
+    // RISC-V 32 specifics
+    static Reg tp() { Reg r; ASM("mv %0, tp" : "=r"(r) :); return r; }
+    static void tp(Reg r) { ASM("mv tp, %0" : : "r"(r) :); }
+
+    static Reg32 a0() {
+        Reg32 r;
+        ASM("mv %0, a0" : "=r"(r));
+        return r;
+    }
+
+    static void a0(const Reg32 & r) {
+        ASM("mv a0, %0" : : "r"(r) :);
+    }
+
+    static Reg32 a1() {
+        Reg32 r;
+        ASM("mv %0, a1" : "=r"(r));
+        return r;
+    }
+
+    static void a1(const Reg32 & r) {
+        ASM("mv a1, %0" : : "r"(r) :);
+    }
+
+    static Reg32 lr() {
+        Reg32 r;
+        ASM("mv %0, x1" : "=r"(r));
+        return r;
+    }
+
+    static void lr(const Reg32 & r) {
+        ASM("mv x1, %0" : : "r"(r) :);
+    }
+
+    static void ecall() { ASM("ecall"); }
+
+    // Machine mode
+    static Reg mhartid() { Reg r; ASM("csrr %0, mhartid" : "=r"(r) : : "memory", "cc"); return r & 0x3; }
+
+    static void mscratch(Reg r)   { ASM("csrw mscratch, %0" : : "r"(r) : "cc"); }
+    static Reg  mscratch() { Reg r; ASM("csrr %0, mscratch" : "=r"(r) : : ); return r; }
+
+    static void mstatus(Reg r)   { ASM("csrw mstatus, %0" : : "r"(r) : "cc"); }
+    static void mstatusc(Reg r)  { ASM("csrc mstatus, %0" : : "r"(r) : "cc"); }
+    static void mstatuss(Reg r)  { ASM("csrs mstatus, %0" : : "r"(r) : "cc"); }
+    static Reg  mstatus() { Reg r; ASM("csrr %0, mstatus" : "=r"(r) : : ); return r; }
+
+    static void mie(Reg r)   { ASM("csrw mie, %0" : : "r"(r) : "cc"); }
+    static void miec(Reg r)  { ASM("csrc mie, %0" : : "r"(r) : "cc"); }
+    static void mies(Reg r)  { ASM("csrs mie, %0" : : "r"(r) : "cc"); }
+    static Reg  mie() { Reg r; ASM("csrr %0, mie" : "=r"(r) : : ); return r; }
+
+    static void mip(Reg r)   { ASM("csrw mip, %0" : : "r"(r) : "cc"); }
+    static void mipc(Reg r)  { ASM("csrc mip, %0" : : "r"(r) : "cc"); }
+    static void mips(Reg r)  { ASM("csrs mip, %0" : : "r"(r) : "cc"); }
+    static Reg  mip() { Reg r; ASM("csrr %0, mip" : "=r"(r) : : ); return r; }
+
+    static Reg mcause() { Reg r; ASM("csrr %0, mcause" : "=r"(r) : : ); return r; }
+    static Reg mtval()  { Reg r; ASM("csrr %0, mtval" : "=r"(r) : : ); return r; }
+
+    static void mepc(Reg r)   { ASM("csrw mepc, %0" : : "r"(r) : "cc"); }
+    static Reg  mepc() { Reg r; ASM("csrr %0, mepc" : "=r"(r) : : ); return r; }
+
+    static void mret() { ASM("mret"); }
+
+    static void mideleg(Reg value) { ASM("csrw mideleg, %0" : : "r"(value) : "cc"); }
+    static void medeleg(Reg value) { ASM("csrw medeleg, %0" : : "r"(value) : "cc"); }
+
+    // Supervisor mode
+    static void sstatus(Reg r)   { ASM("csrw sstatus, %0" : : "r"(r) : "cc"); }
+    static void sstatusc(Reg r)  { ASM("csrc sstatus, %0" : : "r"(r) : "cc"); }
+    static void sstatuss(Reg r)  { ASM("csrs sstatus, %0" : : "r"(r) : "cc"); }
+    static Reg  sstatus() { Reg r; ASM("csrr %0, sstatus" : "=r"(r) : : ); return r; }
+
+    static void sie(Reg r)   { ASM("csrw sie, %0" : : "r"(r) : "cc"); }
+    static void siec(Reg r)  { ASM("csrc sie, %0" : : "r"(r) : "cc"); }
+    static void sies(Reg r)  { ASM("csrs sie, %0" : : "r"(r) : "cc"); }
+    static Reg  sie() { Reg r; ASM("csrr %0, sie" : "=r"(r) : : ); return r; }
+
+    static void sip(Reg r)   { ASM("csrw sip, %0" : : "r"(r) : "cc"); }
+    static void sipc(Reg r)  { ASM("csrc sip, %0" : : "r"(r) : "cc"); }
+    static void sips(Reg r)  { ASM("csrs sip, %0" : : "r"(r) : "cc"); }
+    static Reg  sip() { Reg r; ASM("csrr %0, sip" : "=r"(r) : : ); return r; }
+
+    static Reg scause() { Reg r; ASM("csrr %0, scause" : "=r"(r) : : ); return r; }
+    static Reg stval()  { Reg r; ASM("csrr %0, stval" : "=r"(r) : : ); return r; }
+
+    static void sepc(Reg r)   { ASM("csrw sepc, %0" : : "r"(r) : "cc"); }
+    static Reg  sepc() { Reg r; ASM("csrr %0, sepc" : "=r"(r) : : ); return r; }
+
+    static void sret() { ASM("sret"); }
+
+    static void satp(Reg32 r) { ASM("csrw satp, %0" : : "r"(r) : "cc"); }
+    static Reg  satp() { Reg r; ASM("csrr %0, satp" : "=r"(r) : : ); return r; }
 
 private:
     template<typename Head, typename ... Tail>
