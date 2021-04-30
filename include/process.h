@@ -6,6 +6,7 @@
 #include <architecture.h>
 #include <machine.h>
 #include <utility/queue.h>
+#include <utility/list.h>
 #include <utility/handler.h>
 #include <scheduler.h>
 
@@ -88,6 +89,9 @@ public:
     static void yield();
     static void exit(int status = 0);
 
+    volatile Task * _task;
+
+
 protected:
     void constructor_prologue(unsigned int stack_size);
     void constructor_epilogue(const Log_Addr & entry, unsigned int stack_size);
@@ -122,6 +126,7 @@ protected:
     Queue * _waiting;
     Thread * volatile _joining;
     Queue::Element _link;
+
 
     static volatile unsigned int _thread_count;
     static Scheduler_Timer * _timer;
@@ -175,6 +180,76 @@ public:
 
 private:
     Thread * _handler;
+};
+
+class Task {
+    
+    // Log Addr
+    typedef CPU::Log_Addr Log_Addr;
+
+public: 
+
+    typedef Queue<Thread > T_QUEUE;
+
+
+    static volatile Task * _current;
+
+    T_QUEUE * _threads;
+
+    Task(Segment * cs, Segment * ds) : 
+        _as (new (SYSTEM) Address_Space), 
+        _cs(cs), _ds(ds), 
+        _code(_as->attach(_cs, Memory_Map::APP_CODE)), 
+        _data(_as->attach(_ds, Memory_Map::APP_DATA)) 
+    { 
+        db<Task>(TRC) << "Task(as=" << _as << ",cs=" << _cs << ",ds=" << _ds <<  ",code=" << _code << ",data=" << _data << ") => " << this << endl;
+    }
+
+    Task(Address_Space * as, Segment * cs, Segment * ds) :
+        _as(as), _cs(cs), _ds(ds),
+        _code(_as->attach(_cs, Memory_Map::APP_CODE)),
+        _data(_as->attach(_ds, Memory_Map::APP_DATA))
+    {
+        db<Task>(TRC) << "Task(as=" << _as << ",cs=" << _cs << ",ds=" << _ds <<  ",code=" << _code << ",data=" << _data << ") => " << this << endl;
+    }
+
+
+    ~Task();
+
+    void insert(Thread * thread) {
+        _threads->insert(
+            new List_Elements::Doubly_Linked<Thread>(thread)
+        );
+    }
+
+    Thread * remove() {
+        return _threads->remove()->object();
+    }
+
+    Thread * remove (Thread * thread) {
+        return _threads->remove(thread)->object();
+    }
+
+
+    static void set_current(volatile Task * task);
+
+
+    Address_Space * address_space() const { return _as; }
+
+    Segment * code_segment() const { return _cs; }
+    Segment * data_segment() const { return _ds; }
+    
+    Log_Addr code() const { return _code; }
+    Log_Addr data() const { return _data; }
+
+private:
+
+    Address_Space * _as;
+    Segment * _cs;
+    Segment * _ds;
+    Log_Addr _code;
+    Log_Addr _data;
+
 };
 
 __END_SYS

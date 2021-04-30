@@ -214,7 +214,10 @@ public:
 
         Phy_Addr pd() const { return _pd; }
 
-        void activate() const { CPU::pdp(pd()); }
+        void activate() const { 
+            CPU::pdp(pd()); 
+            ASM("sfence.vma");
+        }
 
         Log_Addr attach(const Chunk & chunk, unsigned int from = directory(APP_LOW)) {
             for(unsigned int i = from; i < PD_ENTRIES; i++)

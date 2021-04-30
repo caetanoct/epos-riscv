@@ -10,9 +10,6 @@ __BEGIN_SYS
 class Address_Space: private MMU::Directory
 {
 
-private:
-    using MMU::Directory::activate;
-
 public:
     typedef CPU::Phy_Addr Phy_Addr;
     typedef CPU::Log_Addr Log_Addr;
@@ -23,6 +20,7 @@ public:
     ~Address_Space();
 
     using MMU::Directory::pd;
+    using MMU::Directory::activate;
 
     Log_Addr attach(Segment * seg);
     Log_Addr attach(Segment * seg, Log_Addr addr);

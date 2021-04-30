@@ -20,6 +20,7 @@ void Thread::constructor_prologue(unsigned int stack_size)
 {
     lock();
 
+    _task = Task::_current;
     _thread_count++;
     _scheduler.insert(this);
 
@@ -29,18 +30,17 @@ void Thread::constructor_prologue(unsigned int stack_size)
 
 void Thread::constructor_epilogue(const Log_Addr & entry, unsigned int stack_size)
 {
-    db<Thread>(TRC) << "Thread(task=" << _task
-                    << ",entry=" << entry
+    db<Thread>(TRC) << "Thread(entry=" << entry
                     << ",state=" << _state
                     << ",priority=" << _link.rank()
                     << ",stack={b=" << reinterpret_cast<void *>(_stack)
                     << ",s=" << stack_size
                     << "},context={b=" << _context
                     << "," << *_context << "}) => " << this << endl;
-
+                    
     assert((_state != WAITING) && (_state != FINISHING)); // Invalid states
 
-    if(multitask)
+    if(Traits<System>::multitask)
         _task->insert(this);
 
     if((_state != READY) && (_state != RUNNING))
@@ -90,7 +90,7 @@ Thread::~Thread()
         break;
     }
 
-    if(multitask)
+    if(Traits<System>::multitask)
         _task->remove(this);
 
     if(_joining)
@@ -346,6 +346,10 @@ void Thread::dispatch(Thread * prev, Thread * next, bool charge)
         db<Thread>(TRC) << "Thread::dispatch(prev=" << prev << ",next=" << next << ")" << endl;
         db<Thread>(INF) << "prev={" << prev << ",ctx=" << *prev->_context << "}" << endl;
         db<Thread>(INF) << "next={" << next << ",ctx=" << *next->_context << "}" << endl;
+
+        if(prev->_task != next->_task){
+            Task::set_current(next->_task);
+        }
 
         // The non-volatile pointer to volatile pointer to a non-volatile context is correct
         // and necessary because of context switches, but here, we are locked() and
