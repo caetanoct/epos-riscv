@@ -184,18 +184,14 @@ private:
 
 class Task {
     
-    // Log Addr
+    friend class Thread;
+
+private:
     typedef CPU::Log_Addr Log_Addr;
+    
+    typedef Thread::Queue Queue;
 
 public: 
-
-    typedef Queue<Thread > T_QUEUE;
-
-
-    static volatile Task * _current;
-
-    T_QUEUE * _threads;
-
     Task(Segment * cs, Segment * ds) : 
         _as (new (SYSTEM) Address_Space), 
         _cs(cs), _ds(ds), 
@@ -215,23 +211,29 @@ public:
 
 
     ~Task();
-
-    void insert(Thread * thread) {
-        _threads->insert(
-            new List_Elements::Doubly_Linked<Thread>(thread)
-        );
+    
+    void insert(Thread * thread) { 
+        _threads.insert(new (SYSTEM) Queue::Element(thread));    
+    }
+    
+    void remove(Thread * thread) { 
+        Queue::Element * el = _threads.remove(thread); 
+        
+        if(el) { 
+            delete el;
+        }
     }
 
-    Thread * remove() {
-        return _threads->remove()->object();
+    void remove() {
+        Queue::Element * el = _threads.remove();
+
+        if(el) { 
+            delete el;
+        }
     }
 
-    Thread * remove (Thread * thread) {
-        return _threads->remove(thread)->object();
-    }
-
-
-    static void set_current(volatile Task * task);
+    static void set_current(Task * task);
+    static volatile Task * current() { return _current; }
 
 
     Address_Space * address_space() const { return _as; }
@@ -243,13 +245,15 @@ public:
     Log_Addr data() const { return _data; }
 
 private:
-
     Address_Space * _as;
     Segment * _cs;
     Segment * _ds;
     Log_Addr _code;
     Log_Addr _data;
 
+    Queue _threads;
+
+    static Task * volatile _current;
 };
 
 __END_SYS
