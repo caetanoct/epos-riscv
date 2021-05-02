@@ -17,7 +17,7 @@ extern "C" {
     void _setup();
 
     // LD eliminates this variable while performing garbage collection, so --undefined=__boot_time_system_info must be present while linking
-    char __boot_time_system_info[sizeof(EPOS::System_Info)] = "System_Info placeholder. Actual System_Info will be added by mkbi!";
+    char __boot_time_system_info[sizeof(EPOS::S::System_Info)] = "System_Info placeholder. Actual System_Info will be added by mkbi!";
 }
 
 __BEGIN_SYS
@@ -701,7 +701,7 @@ void Setup::call_next()
 
 __END_SYS
 
-using namespace EPOS;
+__USING_SYS;
 
 void _entry() // machine mode
 {

@@ -10,6 +10,8 @@ __BEGIN_SYS
 class Address_Space: private MMU::Directory
 {
 
+    friend class Task;
+
 public:
     typedef CPU::Phy_Addr Phy_Addr;
     typedef CPU::Log_Addr Log_Addr;

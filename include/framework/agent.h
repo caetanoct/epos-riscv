@@ -18,7 +18,6 @@ class Agent: public Message
 {
 private:
     typedef void (Agent:: * Member)();
-    typedef RTC_Common::Date Date;
 
 public:
     void exec() {
@@ -54,7 +53,6 @@ private:
     void handle_clock();
     void handle_alarm();
     void handle_chronometer();
-    void handle_ipc();
     void handle_utility();
 
 private:
@@ -71,7 +69,7 @@ void Agent::handle_thread()
     case CREATE1: {
         int (*entry)();
         in(entry);
-        id(Id(THREAD_ID, reinterpret_cast<Id::Unit_Id>(new Adapter<Thread>(Thread::Configuration(Thread::READY, Thread::NORMAL, 0, 0), entry))));
+        id(Id(THREAD_ID, reinterpret_cast<Id::Unit_Id>(new Adapter<Thread>(Thread::Configuration(Thread::READY, Thread::NORMAL, WHITE, 0), entry))));
     } break;
     case DESTROY:
         delete thread;
@@ -133,9 +131,6 @@ void Agent::handle_task()
     case DESTROY:
         delete task;
         break;
-    case SELF:
-        id(Id(TASK_ID, reinterpret_cast<Id::Unit_Id>(Adapter<Task>::self())));
-        break;
     case TASK_ADDRESS_SPACE:
         res = reinterpret_cast<int>(task->address_space());
         break;
@@ -164,24 +159,7 @@ void Agent::handle_task()
 
 void Agent::handle_active()
 {
-    Adapter<Active> * active = reinterpret_cast<Adapter<Active> *>(id().unit());
-    Result res = 0;
-
-    switch(method()) {
-    case CREATE: {
-        id(Id(ACTIVE_ID, reinterpret_cast<Id::Unit_Id>(new Adapter<Active>())));
-    } break;
-    case DESTROY:
-        delete active;
-        break;
-    case START:
-        id(Id(ACTIVE_ID, reinterpret_cast<Id::Unit_Id>(Adapter<Active>::start()));
-        break;
-    default:
-        res = UNDEFINED;
-    }
-
-    result(res);
+    result(UNDEFINED);
 };
 
 
@@ -299,10 +277,10 @@ void Agent::handle_mutex()
         delete mutex;
         break;
     case SYNCHRONIZER_LOCK:
-        id(Id(MUTEX_ID, reinterpret_cast<Id::Unit_Id>(Adapter<Mutex>::lock()));
+        mutex->lock();
         break;
     case SYNCHRONIZER_UNLOCK:
-        id(Id(MUTEX_ID, reinterpret_cast<Id::Unit_Id>(Adapter<Mutex>::unlock()));
+        mutex->unlock();
         break;
     default:
         res = UNDEFINED;
@@ -325,10 +303,10 @@ void Agent::handle_semaphore()
         delete sem;
         break;
     case SYNCHRONIZER_P:
-        id(Id(SEMAPHORE_ID, reinterpret_cast<Id::Unit_Id>(Adapter<Semaphore>::p()));
+        sem->p();
         break;
     case SYNCHRONIZER_V:
-        id(Id(SEMAPHORE_ID, reinterpret_cast<Id::Unit_Id>(Adapter<Semaphore>::v()));
+        sem->v();
         break;
     default:
         res = UNDEFINED;
@@ -351,13 +329,13 @@ void Agent::handle_condition()
         delete cond;
         break;
     case SYNCHRONIZER_WAIT:
-        id(Id(CONDITION_ID, reinterpret_cast<Id::Unit_Id>(Adapter<Condition>::wait()));
+        cond->wait();
         break;
     case SYNCHRONIZER_SIGNAL:
-        id(Id(CONDITION_ID, reinterpret_cast<Id::Unit_Id>(Adapter<Condition>::signal()));
+        cond->signal();
         break;
     case SYNCHRONIZER_BROADCAST:
-        id(Id(CONDITION_ID, reinterpret_cast<Id::Unit_Id>(Adapter<Condition>::broadcast()));
+        cond->broadcast();
         break;
     default:
         res = UNDEFINED;
@@ -382,14 +360,14 @@ void Agent::handle_clock()
     case CLOCK_NOW:
         res = clock->now();
         break;
-    case CLOCK_DATE:
-        res = clock->date();
-        break;
-    case CLOCK_DATE1:
-        Date & d;
-        in(d);
-        clock->date(d);
-        break;
+    // case CLOCK_DATE:
+    //     // res = reinterpret_cast<int>(clock->date());
+    //     break;
+    // case CLOCK_DATE1:
+    //     Date & d;
+    //     in(d);
+    //     clock->date(d);
+    //     break;
     default:
         res = UNDEFINED;
     }

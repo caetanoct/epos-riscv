@@ -113,7 +113,7 @@ else
 void IC::dispatch()
 {
     // Salvar msg
-    CPU::x6(CPU::a0());
+    CPU::x31(CPU::a0());
 
     Interrupt_Id id = int_id();
 
@@ -151,8 +151,7 @@ void IC::int_not(Interrupt_Id id)
 
 void IC::exception(Interrupt_Id id)
 {
-    void * msg = reinterpret_cast<void *>(CPU::x6());
-
+    const CPU::Reg msg = CPU::x31();
 
     CPU::Reg status = sup ? CPU::sstatus() : CPU::mstatus();
     CPU::Reg cause = sup? CPU::scause() : CPU::mcause();
@@ -182,8 +181,8 @@ void IC::exception(Interrupt_Id id)
             break;
         case 8: // user-mode environment call
         case 9: // supervisor-mode environment call
-            // Chamar fsr aqui ?
-            CPU::syscalled(msg);
+            CPU::a1(msg);
+            CPU::syscalled();
             break;
         case 10: // reserved... not described
         case 11: // machine-mode environment call

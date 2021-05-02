@@ -7,12 +7,12 @@
 // ARCHITECTURE, MACHINE, AND APPLICATION SELECTION
 // This section is generated automatically from makedefs by $EPOS/etc/makefile
 //============================================================================
-#define SMOD builtin
+#define SMOD kernel
 #define ARCH rv32
 #define MACH riscv
 #define MMOD sifive_e
 #define APPL hello
-#define __mode_builtin__
+#define __mode_kernel__
 #define __arch_rv32__
 #define __mach_riscv__
 #define __mmod_sifive_e__

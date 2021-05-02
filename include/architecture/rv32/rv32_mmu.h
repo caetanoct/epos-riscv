@@ -402,11 +402,10 @@ public:
     static Phy_Addr pde2phy(PD_Entry entry) { return (entry & ~Page_Flags::MASK) << 2; }
 
     static void flush_tlb() {
-        //TODO
+        ASM("sfence.vma");
     }
-    static void flush_tlb(Log_Addr addr) {
-        //TODO
-    }
+    
+    static void flush_tlb(Log_Addr addr) {}
 
 private:
     static void init();

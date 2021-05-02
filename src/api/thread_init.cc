@@ -4,6 +4,7 @@
 #include <machine/ic.h>
 #include <system.h>
 #include <process.h>
+#include <utility/elf.h>
 
 __BEGIN_SYS
 
@@ -13,7 +14,7 @@ void Thread::init()
 {
     db<Init, Thread>(TRC) << "Thread::init()" << endl;
 
-    typedef int (Main)();
+    typedef int (* Main)(int argc, char * argv[]);
 
     System_Info * si = System::info();
     Main * main;
@@ -44,7 +45,11 @@ void Thread::init()
             new (SYSTEM) Address_Space(MMU::current()),
             code_segment, 
             data_segment,
-            main
+            reinterpret_cast<Main >(si->lm.app_entry),
+            Log_Addr(Memory_Map::APP_CODE), 
+            Log_Addr(Memory_Map::APP_DATA),
+            static_cast<int>(si->lm.app_extra_size), 
+            reinterpret_cast<char **>(si->lm.app_extra)
         );
 
         db<Setup>(TRC) << "task_created  task= " << hex << task << endl;

@@ -23,6 +23,7 @@ class Thread
     friend class Alarm;                 // for lock()
     friend class System;                // for init()
     friend class IC;                    // for link() for priority ceiling
+    friend class Task;
 
 protected:
     static const bool preemptive = Traits<Thread>::Criterion::preemptive;
@@ -191,7 +192,8 @@ private:
 };
 
 class Task {
-    
+    friend class Init_End;
+    friend class System;
     friend class Thread;
 
 private:
@@ -199,26 +201,18 @@ private:
     
     typedef Thread::Queue Queue;
 
-public: 
-    Task(Segment * cs, Segment * ds) : 
-        _as (new (SYSTEM) Address_Space), 
-        _cs(cs), _ds(ds), 
-        _code(_as->attach(_cs, Memory_Map::APP_CODE)), 
-        _data(_as->attach(_ds, Memory_Map::APP_DATA)) 
-    { 
-        db<Task>(TRC) << "Task(as=" << _as << ",cs=" << _cs << ",ds=" << _ds <<  ",code=" << _code << ",data=" << _data << ") => " << this << endl;
-    }
-
+protected: 
     template<typename ... Tn>
-    Task(Address_Space * as, Segment * cs, Segment * ds, int (* entry)(Tn ...), Tn ... an) :
-        _as(as), _cs(cs), _ds(ds),
-        _code(_as->attach(_cs, Memory_Map::APP_CODE)),
-        _data(_as->attach(_ds, Memory_Map::APP_DATA))
+    Task(Address_Space * as, Segment * cs, Segment * ds, int (* entry)(Tn ...), 
+        const Log_Addr & code, const Log_Addr & data, Tn ... an) : 
+        _as(as), _cs(cs), _ds(ds), _entry(entry),
+        _code(code),
+        _data(data)
     {
         db<Task>(TRC) << "Task(as=" << _as << ",cs=" << _cs << ",ds=" << _ds <<  ",code=" << _code << ",data=" << _data << ") => " << this << endl;
 
-            _current = this;
-            activate();
+        _current = this;
+        activate();
 
         _main = new (SYSTEM) Thread(
             Thread::Configuration(
@@ -229,35 +223,20 @@ public:
 
     }
 
+public: 
+    template<typename ... Tn>
+    Task(
+        Segment * cs, Segment * ds, 
+        int (* entry)(Tn ...), Tn ... an)
+    : _as (new (SYSTEM) Address_Space), _cs(cs), _ds(ds), _entry(entry), _code(_as->attach(_cs)), _data(_as->attach(_ds)) {
+        db<Task>(TRC) << "Task(as=" << _as << ",cs=" << _cs << ",ds=" << _ds << ",entry=" << _entry << ",code=" << _code << ",data=" << _data << ") => " << this << endl;
+
+        _main = new (SYSTEM) Thread(Thread::Configuration(Thread::READY, Thread::MAIN, WHITE, this, 0), entry, an ...);
+    }
+
 
     ~Task();
     
-    void insert(Thread * thread) { 
-        _threads.insert(new (SYSTEM) Queue::Element(thread));    
-    }
-    
-    void remove(Thread * thread) { 
-        Queue::Element * el = _threads.remove(thread); 
-        
-        if(el) { 
-            delete el;
-        }
-    }
-
-    void remove() {
-        Queue::Element * el = _threads.remove();
-
-        if(el) { 
-            delete el;
-        }
-    }
-
-    void activate() const {
-        this->_as->activate();
-    } 
-    static volatile Task * current() { return _current; }
-
-
     Address_Space * address_space() const { return _as; }
 
     Segment * code_segment() const { return _cs; }
@@ -266,10 +245,48 @@ public:
     Log_Addr code() const { return _code; }
     Log_Addr data() const { return _data; }
 
+    Thread * main() const { return _main; }
+private:
+    void insert(Thread *thread)
+    {
+        _threads.insert(new (SYSTEM) Queue::Element(thread));
+    }
+
+    void remove(Thread *thread)
+    {
+        Queue::Element *el = _threads.remove(thread);
+
+        if (el)
+        {
+            delete el;
+        }
+    }
+
+    void remove()
+    {
+        Queue::Element *el = _threads.remove();
+
+        if (el)
+        {
+            delete el;
+        }
+    }
+
+    void activate() const
+    {
+        this->_as->activate();
+    }
+
+    static volatile Task *current() { return _current; }
+    static volatile void current(Task *t) { _current = t; }
+
+    static void init();
+
 private:
     Address_Space * _as;
     Segment * _cs;
     Segment * _ds;
+    Log_Addr _entry;
     Log_Addr _code;
     Log_Addr _data;
 

@@ -18,6 +18,7 @@ class Machine: private Machine_Common
     friend class Setup;
     friend class Init_Begin;
     friend class Init_System;
+    friend class First_Object;
 
 private:
     static const bool smp = Traits<System>::multicore;

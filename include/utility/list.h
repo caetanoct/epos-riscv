@@ -1346,6 +1346,20 @@ public:
 
     unsigned int grouped_size() const { return _grouped_size; }
 
+     
+   Element * search_worst() {
+       Element * e = head();
+       Element * largest = e;
+       
+       for (unsigned int i = 0; i < size() - 1; i++) {
+           e = e->next();
+           if (e->size() > largest->size())
+               largest = e;
+       }
+
+       return largest;
+    }
+
     Element * search_size(unsigned int s) {
         Element * e = head();
         if(sizeof(Object_Type) < sizeof(Element))
@@ -1381,7 +1395,7 @@ public:
         print_head();
         print_tail();
 
-        Element * e = search_size(s);
+        Element * e = search_worst(s);
         if(e) {
             e->shrink(s);
             _grouped_size -= s;

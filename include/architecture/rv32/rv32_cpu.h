@@ -301,13 +301,13 @@ public:
     static void lr(const Reg32 & r) { ASM("mv x1, %0" : : "r"(r) :); }
 
     
-    static void x6(const Reg32 & r) { 
-        ASM("mv x6, %0" : : "r"(r) :); 
+    static void x31(const Reg32 & r) { 
+        ASM("mv x31, %0" : : "r"(r) :); 
     }
     
-    static Reg32 x6() { 
+    static Reg32 x31() { 
         Reg32 r;      
-        ASM("mv %0, x6" :  "=r"(r)); 
+        ASM("mv %0, x31" :  "=r"(r)); 
         return r; 
     }
 
@@ -373,7 +373,7 @@ public:
     static Reg  satp() { Reg r; ASM("csrr %0, satp" : "=r"(r) : : ); return r; }
 
     static void syscall(void * message);
-    static void syscalled(void * message);
+    static void syscalled();
 
 
 private:

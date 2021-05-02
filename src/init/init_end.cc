@@ -11,6 +11,8 @@ __BEGIN_SYS
 
 class Init_End
 {
+    friend class Task;
+
 public:
     Init_End() {
         db<Init>(TRC) << "Init_End()" << endl;
