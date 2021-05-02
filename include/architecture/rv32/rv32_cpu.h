@@ -355,6 +355,10 @@ public:
     static void satp(Reg32 r) { ASM("csrw satp, %0" : : "r"(r) : "cc"); }
     static Reg  satp() { Reg r; ASM("csrr %0, satp" : "=r"(r) : : ); return r; }
 
+    static void syscall(void * message);
+    static void syscalled();
+
+
 private:
     template<typename Head, typename ... Tail>
     static void init_stack_helper(Log_Addr sp, Head head, Tail ... tail) {

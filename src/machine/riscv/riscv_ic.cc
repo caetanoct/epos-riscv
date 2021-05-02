@@ -175,6 +175,8 @@ void IC::exception(Interrupt_Id id)
             break;
         case 8: // user-mode environment call
         case 9: // supervisor-mode environment call
+            // Chamar fsr aqui ?
+            break;
         case 10: // reserved... not described
         case 11: // machine-mode environment call
             db<IC, System>(WRN) << " => reserved";
