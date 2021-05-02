@@ -43,32 +43,15 @@ void Thread::init()
         Task * task =  new (SYSTEM) Task(
             new (SYSTEM) Address_Space(MMU::current()),
             code_segment, 
-            data_segment
+            data_segment,
+            true
         );
 
         db<Setup>(TRC) << "task_created  task= " << hex << task << endl;
 
-        Task::set_current(task);
-
-        // new (SYSTEM) Task(
-        //     new (SYSTEM) Address_Space(MMU::current()),
-        //     new (SYSTEM) Segment(Log_Addr(si->lm.app_code), si->lm.app_code_size, Segment::Flags::APP),
-        //     new (SYSTEM) Segment(Log_Addr(si->lm.app_data), si->lm.app_data_size, Segment::Flags::APP)
-        //     // main,
-        //     // Log_Addr(Memory_Map::APP_CODE), Log_Addr(Memory_Map::APP_DATA)
-        // );
-
         if(si->lm.has_ext)
             db<Init>(INF) << "Thread::init: additional data from mkbi at "  << reinterpret_cast<void *>(si->lm.app_extra) << ":" << si->lm.app_extra_size << endl;
     
-        new (SYSTEM) Thread(
-            Thread::Configuration(Thread::RUNNING, Thread::MAIN), 
-            main
-        );
-
-
-        Task::set_current(Thread::self()->_task);
-
     } else {
         // If EPOS is a library, then adjust the application entry point to __epos_app_entry,
         // which will directly call main(). In this case, _init will already have been called,

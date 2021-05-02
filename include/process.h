@@ -89,7 +89,7 @@ public:
     static void yield();
     static void exit(int status = 0);
 
-    volatile Task * _task;
+    Task * task() const { return _task; }
 
 
 protected:
@@ -127,7 +127,8 @@ protected:
     Thread * volatile _joining;
     Queue::Element _link;
 
-
+    Task * _task;
+    
     static volatile unsigned int _thread_count;
     static Scheduler_Timer * _timer;
     static Scheduler<Thread> _scheduler;
@@ -201,12 +202,17 @@ public:
         db<Task>(TRC) << "Task(as=" << _as << ",cs=" << _cs << ",ds=" << _ds <<  ",code=" << _code << ",data=" << _data << ") => " << this << endl;
     }
 
-    Task(Address_Space * as, Segment * cs, Segment * ds) :
+    Task(Address_Space * as, Segment * cs, Segment * ds, bool set_current = false) :
         _as(as), _cs(cs), _ds(ds),
         _code(_as->attach(_cs, Memory_Map::APP_CODE)),
         _data(_as->attach(_ds, Memory_Map::APP_DATA))
     {
         db<Task>(TRC) << "Task(as=" << _as << ",cs=" << _cs << ",ds=" << _ds <<  ",code=" << _code << ",data=" << _data << ") => " << this << endl;
+
+        if (set_current) {
+            _current = this;
+            activate();
+        }
     }
 
 
@@ -232,7 +238,9 @@ public:
         }
     }
 
-    static void set_current(Task * task);
+    void activate() const {
+        this->_as->activate();
+    } 
     static volatile Task * current() { return _current; }
 
 

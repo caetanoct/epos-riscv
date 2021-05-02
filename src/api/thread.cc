@@ -348,7 +348,7 @@ void Thread::dispatch(Thread * prev, Thread * next, bool charge)
         db<Thread>(INF) << "next={" << next << ",ctx=" << *next->_context << "}" << endl;
 
         if(prev->_task != next->_task){
-            Task::set_current(next->_task);
+            next->_task->activate();
         }
 
         // The non-volatile pointer to volatile pointer to a non-volatile context is correct

@@ -17,9 +17,5 @@ Task::~Task()
     delete _as;
 }
 
-void Task::set_current(Task * task) {
-    Task::_current = task;
-    task->_as->activate();
-} 
 
 __END_SYS
