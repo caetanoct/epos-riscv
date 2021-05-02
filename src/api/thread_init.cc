@@ -44,7 +44,7 @@ void Thread::init()
             new (SYSTEM) Address_Space(MMU::current()),
             code_segment, 
             data_segment,
-            true
+            main
         );
 
         db<Setup>(TRC) << "task_created  task= " << hex << task << endl;

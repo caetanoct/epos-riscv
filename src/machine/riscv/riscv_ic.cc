@@ -112,6 +112,9 @@ else
 
 void IC::dispatch()
 {
+    // Salvar msg
+    CPU::x6(CPU::a0());
+
     Interrupt_Id id = int_id();
 
     if((id != INT_SYS_TIMER) || Traits<IC>::hysterically_debugged)
@@ -134,6 +137,7 @@ void IC::dispatch()
     }
 
     _int_vector[id](id);
+
 }
 
 void IC::int_not(Interrupt_Id id)
@@ -147,6 +151,9 @@ void IC::int_not(Interrupt_Id id)
 
 void IC::exception(Interrupt_Id id)
 {
+    void * msg = reinterpret_cast<void *>(CPU::x6());
+
+
     CPU::Reg status = sup ? CPU::sstatus() : CPU::mstatus();
     CPU::Reg cause = sup? CPU::scause() : CPU::mcause();
     CPU::Reg hartid = CPU::id();
@@ -176,6 +183,7 @@ void IC::exception(Interrupt_Id id)
         case 8: // user-mode environment call
         case 9: // supervisor-mode environment call
             // Chamar fsr aqui ?
+            CPU::syscalled(msg);
             break;
         case 10: // reserved... not described
         case 11: // machine-mode environment call

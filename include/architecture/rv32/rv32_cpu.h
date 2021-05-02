@@ -287,12 +287,29 @@ public:
     static Reg tp() { Reg r; ASM("mv %0, tp" : "=r"(r) :); return r; }
     static void tp(Reg r) { ASM("mv tp, %0" : : "r"(r) :); }
 
-    static Reg32 a0() { Reg32 r;      ASM("mv %0, a0" :  "=r"(r)); return r; }
-    static void a0(const Reg32 & r) { ASM("mv a0, %0" : : "r"(r) :); }
+    static Reg32 a0() { 
+        Reg32 r;      
+        ASM("mv %0, a0" :  "=r"(r)); 
+        return r; 
+    }
+    static void a0(const Reg32 & r) { 
+        ASM("mv a0, %0" : : "r"(r) :); 
+    }
     static Reg32 a1() { Reg32 r;      ASM("mv %0, a1" :  "=r"(r)); return r; }
     static void a1(const Reg32 & r) { ASM("mv a1, %0" : : "r"(r) :); }
     static Reg32 lr() { Reg32 r;      ASM("mv %0, x1" :  "=r"(r)); return r; }
     static void lr(const Reg32 & r) { ASM("mv x1, %0" : : "r"(r) :); }
+
+    
+    static void x6(const Reg32 & r) { 
+        ASM("mv x6, %0" : : "r"(r) :); 
+    }
+    
+    static Reg32 x6() { 
+        Reg32 r;      
+        ASM("mv %0, x6" :  "=r"(r)); 
+        return r; 
+    }
 
     static void ecall() { ASM("ecall"); }
 
@@ -356,7 +373,7 @@ public:
     static Reg  satp() { Reg r; ASM("csrr %0, satp" : "=r"(r) : : ); return r; }
 
     static void syscall(void * message);
-    static void syscalled();
+    static void syscalled(void * message);
 
 
 private:

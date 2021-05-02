@@ -59,11 +59,18 @@ public:
 
     // Thread Configuration
     struct Configuration {
-        Configuration(const State & s = READY, const Criterion & c = NORMAL, unsigned int ss = STACK_SIZE)
-        : state(s), criterion(c), stack_size(ss) {}
+        Configuration(
+            const State & s = READY, 
+            const Criterion & c = NORMAL, 
+            const Color & a = WHITE,
+            Task * t = 0,
+            unsigned int ss = STACK_SIZE)
+        : state(s), criterion(c), color(a), task(t), stack_size(ss) {}
 
         State state;
         Criterion criterion;
+        Color color;
+        Task * task;
         unsigned int stack_size;
     };
 
@@ -202,17 +209,24 @@ public:
         db<Task>(TRC) << "Task(as=" << _as << ",cs=" << _cs << ",ds=" << _ds <<  ",code=" << _code << ",data=" << _data << ") => " << this << endl;
     }
 
-    Task(Address_Space * as, Segment * cs, Segment * ds, bool set_current = false) :
+    template<typename ... Tn>
+    Task(Address_Space * as, Segment * cs, Segment * ds, int (* entry)(Tn ...), Tn ... an) :
         _as(as), _cs(cs), _ds(ds),
         _code(_as->attach(_cs, Memory_Map::APP_CODE)),
         _data(_as->attach(_ds, Memory_Map::APP_DATA))
     {
         db<Task>(TRC) << "Task(as=" << _as << ",cs=" << _cs << ",ds=" << _ds <<  ",code=" << _code << ",data=" << _data << ") => " << this << endl;
 
-        if (set_current) {
             _current = this;
             activate();
-        }
+
+        _main = new (SYSTEM) Thread(
+            Thread::Configuration(
+                Thread::RUNNING, Thread::MAIN, WHITE, this, 0), 
+                entry, 
+                an ...
+        );
+
     }
 
 
@@ -260,6 +274,8 @@ private:
     Log_Addr _data;
 
     Queue _threads;
+
+    Thread * _main;
 
     static Task * volatile _current;
 };
