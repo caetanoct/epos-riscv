@@ -1395,7 +1395,7 @@ public:
         print_head();
         print_tail();
 
-        Element * e = search_worst(s);
+        Element * e = search_worst();
         if(e) {
             e->shrink(s);
             _grouped_size -= s;
