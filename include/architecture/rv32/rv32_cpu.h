@@ -375,8 +375,6 @@ public:
     static void syscall(void * message);
     static void syscalled(void * message);
 
-    static Reg syscallMask() { Reg r; ASM("csrr %0, scause" : "=r"(r) : : ); return r & 0x9;}
-
 
 private:
     template<typename Head, typename ... Tail>
