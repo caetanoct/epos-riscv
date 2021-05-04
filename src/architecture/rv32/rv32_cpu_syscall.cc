@@ -3,8 +3,9 @@
 
 __BEGIN_SYS
 
-void CPU::syscall(void * msg)
+void CPU::syscall(void * message)
 {   
+    ASM("mv %0, a0" :  "=r"(message)); 
     ASM("ecall");
 }
 

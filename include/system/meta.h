@@ -220,6 +220,7 @@ void SERIALIZE(char * buf, int index, const T & a) {
 
 template<typename T, typename ... Tn>
 void SERIALIZE(char * buf, int index, const T & a, const Tn & ... an) {
+    buf[index] = sizeof(T); index += sizeof(int);
     __builtin_memcpy(&buf[index], &a, sizeof(T));
     SERIALIZE(buf, index + sizeof(T), an ...);
 }

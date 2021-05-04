@@ -11,6 +11,8 @@ __BEGIN_SYS
 // Class attributes
 IC::Interrupt_Handler IC::_int_vector[IC::INTS];
 
+static void * msg;
+
 // Class methods
 void IC::entry()
 {
@@ -56,12 +58,17 @@ else
         "        sw         x31, 124(sp)                                \n"
         "        csrr       x31, mepc                                   \n"
         "        sw         x31, 128(sp)                                \n");
-
+if (CPU::syscallMask() == 9) {
+    msg = (void *) CPU::a0();
+}
     ASM("        la          ra, .restore                               \n" // set LR to restore context before returning
         "        j          %0                                          \n"
         "                                                               \n"
         "# Restore context                                              \n"
         ".restore:                                                      \n"
+        "        lw         x31, 128(sp)                                \n"
+        "        add        x31, x31, x10                               \n"
+        "        csrw      sepc, x31                                    \n"
         "        lw          x1,   4(sp)                                \n"
         "        lw          x2,   8(sp)                                \n"
         "        lw          x3,  12(sp)                                \n"
@@ -151,8 +158,6 @@ void IC::int_not(Interrupt_Id id)
 
 void IC::exception(Interrupt_Id id)
 {
-    const CPU::Reg msg = CPU::x31();
-
     CPU::Reg status = sup ? CPU::sstatus() : CPU::mstatus();
     CPU::Reg cause = sup? CPU::scause() : CPU::mcause();
     CPU::Reg hartid = CPU::id();
@@ -162,6 +167,7 @@ void IC::exception(Interrupt_Id id)
 
     db<IC,System>(WRN) << "IC::Exception(" << id << ") => {" << hex << "status=" << status << ",cause=" << cause << ",hartid=" << hartid << ",epc=" << epc << ",tval=" << tval << ",sp=" << sp <<  "}" << dec;
 
+    ASM("mv x10, zero");
     switch(id) {
         case 0: // unaligned Instruction
         case 1: // instruction access failure
@@ -181,8 +187,8 @@ void IC::exception(Interrupt_Id id)
             break;
         case 8: // user-mode environment call
         case 9: // supervisor-mode environment call
-            CPU::a1(msg);
-            CPU::syscalled();
+            CPU::syscalled(msg);
+            ASM("addi x10, x10, 4");
             break;
         case 10: // reserved... not described
         case 11: // machine-mode environment call

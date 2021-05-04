@@ -373,7 +373,9 @@ public:
     static Reg  satp() { Reg r; ASM("csrr %0, satp" : "=r"(r) : : ); return r; }
 
     static void syscall(void * message);
-    static void syscalled();
+    static void syscalled(void * message);
+
+    static Reg syscallMask() { Reg r; ASM("csrr %0, scause" : "=r"(r) : : ); return r & 0x9;}
 
 
 private:

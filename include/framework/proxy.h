@@ -99,6 +99,9 @@ public:
     void signal() { invoke(SYNCHRONIZER_SIGNAL); }
     void broadcast() { invoke(SYNCHRONIZER_BROADCAST); }
 
+    Microsecond resolution() { return invoke(CLOCK_RESOLUTION); }
+    Second now() { return invoke(CLOCK_NOW); }
+
     // Timing
     template<typename T>
     static void delay(T t) { static_invoke(ALARM_DELAY, t); }

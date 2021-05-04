@@ -4,18 +4,9 @@ extern "C" { void _exec(void *); }
 
 __BEGIN_SYS
 
-void CPU::syscalled()
+void CPU::syscalled(void * message)
 {
-
-    if(Traits<Build>::MODE == Traits<Build>::KERNEL) {
-        // Do the system call by calling _exec with the message pointed by a0
-        ASM("        mv         a0,   a1                                      \n");
-        ASM("        call    _exec                                            \n");
-
-        CPU::sepc(CPU::sepc() + 0x4);
-
-        CPU::sret();
-    }
+    _exec(message);
 }
 
 __END_SYS

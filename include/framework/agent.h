@@ -101,7 +101,7 @@ void Agent::handle_thread()
         Thread::yield();
         break;
     case THREAD_WAIT_NEXT:
-        //            Periodic_Thread::wait_next();
+        Periodic_Thread::wait_next();
         break;
     case THREAD_EXIT: {
         int r;

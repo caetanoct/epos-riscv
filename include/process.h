@@ -31,6 +31,7 @@ protected:
 
     static const unsigned int QUANTUM = Traits<Thread>::QUANTUM;
     static const unsigned int STACK_SIZE = Traits<Application>::STACK_SIZE;
+    static const unsigned int USER_STACK_SIZE = Traits<Application>::USER_STACK_SIZE;
 
     typedef CPU::Log_Addr Log_Addr;
     typedef CPU::Context Context;
@@ -136,59 +137,11 @@ protected:
     Queue::Element _link;
 
     Task * _task;
-    
+    Segment * _ustack;
+
     static volatile unsigned int _thread_count;
     static Scheduler_Timer * _timer;
     static Scheduler<Thread> _scheduler;
-};
-
-
-template<typename ... Tn>
-inline Thread::Thread(int (* entry)(Tn ...), Tn ... an)
-: _state(READY), _waiting(0), _joining(0), _link(this, NORMAL)
-{
-    constructor_prologue(STACK_SIZE);
-    _context = CPU::init_stack(0, _stack + STACK_SIZE, &__exit, entry, an ...);
-    constructor_epilogue(entry, STACK_SIZE);
-}
-
-template<typename ... Tn>
-inline Thread::Thread(const Configuration & conf, int (* entry)(Tn ...), Tn ... an)
-: _state(conf.state), _waiting(0), _joining(0), _link(this, conf.criterion)
-{
-    constructor_prologue(conf.stack_size);
-    _context = CPU::init_stack(0, _stack + conf.stack_size, &__exit, entry, an ...);
-    constructor_epilogue(entry, conf.stack_size);
-}
-
-
-// A Java-like Active Object
-class Active: public Thread
-{
-public:
-    Active(): Thread(Configuration(Thread::SUSPENDED), &entry, this) {}
-    virtual ~Active() {}
-
-    virtual int run() = 0;
-
-    void start() { resume(); }
-
-private:
-    static int entry(Active * runnable) { return runnable->run(); }
-};
-
-
-// An event handler that triggers a thread (see handler.h)
-class Thread_Handler : public Handler
-{
-public:
-    Thread_Handler(Thread * h) : _handler(h) {}
-    ~Thread_Handler() {}
-
-    void operator()() { _handler->resume(); }
-
-private:
-    Thread * _handler;
 };
 
 class Task {
@@ -246,6 +199,8 @@ public:
     Log_Addr data() const { return _data; }
 
     Thread * main() const { return _main; }
+
+    static Task * self() { return _current; }
 private:
     void insert(Thread *thread)
     {
@@ -296,6 +251,79 @@ private:
 
     static Task * volatile _current;
 };
+
+
+template<typename ... Tn>
+inline Thread::Thread(int (* entry)(Tn ...), Tn ... an)
+: _task(Task::self()), _ustack(0), _state(READY), _waiting(0), _joining(0), _link(this, NORMAL)
+{
+    constructor_prologue(STACK_SIZE);
+    _context = CPU::init_stack(0, _stack + STACK_SIZE, &__exit, entry, an ...);
+    constructor_epilogue(entry, STACK_SIZE);
+}
+
+template<typename ... Tn>
+inline Thread::Thread(const Configuration & conf, int (* entry)(Tn ...), Tn ... an)
+: _task(conf.task ? conf.task : Task::self()), _state(conf.state), _waiting(0), _joining(0), _link(this, conf.criterion)
+{
+    if (Traits<System>::multitask && !conf.stack_size) {
+        constructor_prologue(STACK_SIZE);
+        _ustack = new (SYSTEM) Segment(USER_STACK_SIZE);
+
+        Log_Addr ustack = Task::self()->address_space()->attach(_ustack);
+
+        Log_Addr user_sp = ustack + USER_STACK_SIZE;
+        if (conf.criterion == MAIN)
+            user_sp = CPU::init_user_stack(user_sp, 0, an ...);
+        else
+            user_sp = CPU::init_user_stack(user_sp, &__exit, an ...);
+
+        Task::self()->address_space()->detach(_ustack, ustack);
+        ustack = _task->address_space()->attach(_ustack);
+
+        user_sp = ustack + USER_STACK_SIZE - user_sp;
+
+        _context = CPU::init_stack(user_sp, _stack + STACK_SIZE, &__exit, entry, an ...);
+    } else {
+        constructor_prologue(conf.stack_size);
+        _ustack = 0;
+        _context = CPU::init_stack(0, _stack + conf.stack_size, &__exit, entry, an ...);
+    }
+
+    constructor_epilogue(entry, STACK_SIZE);
+}
+
+
+// A Java-like Active Object
+class Active: public Thread
+{
+public:
+    Active(): Thread(Configuration(Thread::SUSPENDED), &entry, this) {}
+    virtual ~Active() {}
+
+    virtual int run() = 0;
+
+    void start() { resume(); }
+
+private:
+    static int entry(Active * runnable) { return runnable->run(); }
+};
+
+
+// An event handler that triggers a thread (see handler.h)
+class Thread_Handler : public Handler
+{
+public:
+    Thread_Handler(Thread * h) : _handler(h) {}
+    ~Thread_Handler() {}
+
+    void operator()() { _handler->resume(); }
+
+private:
+    Thread * _handler;
+};
+
+
 
 __END_SYS
 
