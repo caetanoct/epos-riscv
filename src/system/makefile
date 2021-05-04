@@ -45,7 +45,7 @@ system_kernel_$(MMOD): $(OBJS)
 		--section-start $(MACH_DATA_NAME)=$(SYS_DATA_ADDR) \
 		--entry=_init -o system_$(MMOD) \
 		$(LIB)/crtbegin_$(MMOD).o \
-		system_scaffold.o system_binding.o kernel_binding.o \
+		system_scaffold.o system_binding.o \
 		$(LIB)/crtend_$(MMOD).o \
 		--whole-archive \
 		-l$(LSYS) -l$(LMACH) -l$(LARCH) \

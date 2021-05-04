@@ -23,15 +23,17 @@ class Thread
     friend class Alarm;                 // for lock()
     friend class System;                // for init()
     friend class IC;                    // for link() for priority ceiling
-    friend class Task;
+    // friend class Task;
 
 protected:
+    static const bool smp = Traits<Thread>::smp;
     static const bool preemptive = Traits<Thread>::Criterion::preemptive;
     static const bool reboot = Traits<System>::reboot;
+    static const bool multitask = Traits<System>::multitask;
 
     static const unsigned int QUANTUM = Traits<Thread>::QUANTUM;
-    static const unsigned int STACK_SIZE = Traits<Application>::STACK_SIZE;
-    static const unsigned int USER_STACK_SIZE = Traits<Application>::USER_STACK_SIZE;
+    static const unsigned int STACK_SIZE = multitask ? Traits<System>::STACK_SIZE : Traits<Application>::STACK_SIZE;
+    static const unsigned int USER_STACK_SIZE = Traits<Application>::STACK_SIZE;
 
     typedef CPU::Log_Addr Log_Addr;
     typedef CPU::Context Context;
@@ -89,6 +91,8 @@ public:
     const volatile Priority & priority() const { return _link.rank(); }
     void priority(const Priority & p);
 
+    Task * task() const { return _task; }
+
     int join();
     void pass();
     void suspend();
@@ -97,9 +101,6 @@ public:
     static Thread * volatile self() { return running(); }
     static void yield();
     static void exit(int status = 0);
-
-    Task * task() const { return _task; }
-
 
 protected:
     void constructor_prologue(unsigned int stack_size);
@@ -129,15 +130,15 @@ private:
     static void init();
 
 protected:
+    Task * _task;
+    Segment * _ustack;
+
     char * _stack;
     Context * volatile _context;
     volatile State _state;
     Queue * _waiting;
     Thread * volatile _joining;
     Queue::Element _link;
-
-    Task * _task;
-    Segment * _ustack;
 
     static volatile unsigned int _thread_count;
     static Scheduler_Timer * _timer;
@@ -150,6 +151,8 @@ class Task {
     friend class Thread;
 
 private:
+    static const bool multitask = Traits<System>::multitask;
+
     typedef CPU::Log_Addr Log_Addr;
     
     typedef Thread::Queue Queue;
@@ -167,13 +170,7 @@ protected:
         _current = this;
         activate();
 
-        _main = new (SYSTEM) Thread(
-            Thread::Configuration(
-                Thread::RUNNING, Thread::MAIN, WHITE, this, 0), 
-                entry, 
-                an ...
-        );
-
+        _main = new (SYSTEM) Thread(Thread::Configuration(Thread::RUNNING, Thread::MAIN, WHITE, this, 0), entry, an ...);
     }
 
 public: 
@@ -187,6 +184,13 @@ public:
         _main = new (SYSTEM) Thread(Thread::Configuration(Thread::READY, Thread::MAIN, WHITE, this, 0), entry, an ...);
     }
 
+    template<typename ... Tn>
+    Task(const Thread::Configuration & conf, Segment * cs, Segment * ds, int (*entry)(Tn ...), Tn ... an)
+    : _as(new (SYSTEM) Address_Space), _cs(cs), _ds(ds), _entry(entry), _code(_as->attach(_cs)), _data(_as->attach(_ds)) {
+        db<Task>(TRC) << "Task(as=" << _as << ",cs=" << _cs << ",ds=" << _ds << ",entry=" << _entry << ",code=" << _code << ",data=" << _data << ") => " << this << endl;
+
+        _main = new (SYSTEM) Thread(Thread::Configuration(conf.state, conf.criterion, this, 0), entry, an ...);
+    }
 
     ~Task();
     
@@ -200,40 +204,16 @@ public:
 
     Thread * main() const { return _main; }
 
-    static Task * self() { return _current; }
+    static Task * volatile self() { return current(); }
 private:
-    void insert(Thread *thread)
-    {
-        _threads.insert(new (SYSTEM) Queue::Element(thread));
-    }
+    void activate() const { _as->activate(); }
 
-    void remove(Thread *thread)
-    {
-        Queue::Element *el = _threads.remove(thread);
+    void insert(Thread * thread) { _threads.insert(new (SYSTEM) Queue::Element(thread)); }
+    void remove(Thread * thread) { Queue::Element *el = _threads.remove(thread); if (el) delete el; }
+    // void remove() { Queue::Element *el = _threads.remove(); if (el) delete el; }
 
-        if (el)
-        {
-            delete el;
-        }
-    }
-
-    void remove()
-    {
-        Queue::Element *el = _threads.remove();
-
-        if (el)
-        {
-            delete el;
-        }
-    }
-
-    void activate() const
-    {
-        this->_as->activate();
-    }
-
-    static volatile Task *current() { return _current; }
-    static volatile void current(Task *t) { _current = t; }
+    static Task * volatile current() { return _current; }
+    static void current(Task *t) { _current = t; }
 
     static void init();
 
@@ -252,6 +232,33 @@ private:
     static Task * volatile _current;
 };
 
+// A Java-like Active Object
+class Active: public Thread
+{
+public:
+    Active(): Thread(Configuration(Thread::SUSPENDED), &entry, this) {}
+    virtual ~Active() {}
+
+    virtual int run() = 0;
+
+    void start() { resume(); }
+
+private:
+    static int entry(Active * runnable) { return runnable->run(); }
+};
+
+// An event handler that triggers a thread (see handler.h)
+class Thread_Handler : public Handler
+{
+public:
+    Thread_Handler(Thread * h) : _handler(h) {}
+    ~Thread_Handler() {}
+
+    void operator()() { _handler->resume(); }
+
+private:
+    Thread * _handler;
+};
 
 template<typename ... Tn>
 inline Thread::Thread(int (* entry)(Tn ...), Tn ... an)
@@ -292,38 +299,6 @@ inline Thread::Thread(const Configuration & conf, int (* entry)(Tn ...), Tn ... 
 
     constructor_epilogue(entry, STACK_SIZE);
 }
-
-
-// A Java-like Active Object
-class Active: public Thread
-{
-public:
-    Active(): Thread(Configuration(Thread::SUSPENDED), &entry, this) {}
-    virtual ~Active() {}
-
-    virtual int run() = 0;
-
-    void start() { resume(); }
-
-private:
-    static int entry(Active * runnable) { return runnable->run(); }
-};
-
-
-// An event handler that triggers a thread (see handler.h)
-class Thread_Handler : public Handler
-{
-public:
-    Thread_Handler(Thread * h) : _handler(h) {}
-    ~Thread_Handler() {}
-
-    void operator()() { _handler->resume(); }
-
-private:
-    Thread * _handler;
-};
-
-
 
 __END_SYS
 

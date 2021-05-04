@@ -255,7 +255,7 @@ TLDFLAGS	:= -m32
 ACC		= $(BIN)/eposcc $(MACH_CC_FLAGS)  -c -ansi -O
 ACCFLAGS	= $(MACH_CXX_FLAGS)
 ALD		= $(BIN)/eposcc --$(SMOD) --no-warn-mismatch
-ALDFLAGS	:= --gc-sections --undefined=__boot_time_system_info $(MACH_MAGIC)
+ALDFLAGS	:= --gc-sections $(MACH_MAGIC) 
 
 # Tools and flags to compile the system
 AR		= $(COMP_PREFIX)ar

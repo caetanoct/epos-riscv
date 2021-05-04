@@ -62,8 +62,8 @@ protected:
 
 public:
     struct Configuration: public Thread::Configuration {
-        Configuration(const Microsecond & p, const Microsecond & d = SAME, const Microsecond & cap = UNKNOWN, const Microsecond & act = NOW, const unsigned int n = INFINITE, const State & s = READY, const Criterion & c = NORMAL, unsigned int ss = STACK_SIZE)
-        : Thread::Configuration(s, c, ss), period(p), deadline(d == SAME ? p : d), capacity(cap), activation(act), times(n) {}
+        Configuration(const Microsecond & p, const Microsecond & d = SAME, const Microsecond & cap = UNKNOWN, const Microsecond & act = NOW, const unsigned int n = INFINITE, const State & s = READY, const Criterion & c = NORMAL, const Color & a = WHITE, Task * t = 0, unsigned int ss = STACK_SIZE)
+        : Thread::Configuration(s, c, a, t, ss), period(p), deadline(d == SAME ? p : d), capacity(cap), activation(act), times(n) {}
 
         Microsecond period;
         Microsecond deadline;

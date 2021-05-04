@@ -4,7 +4,7 @@
 #define __agent_h
 
 #include <process.h>
-
+#include <real-time.h>
 #include <machine/rtc.h>
 #include <memory.h>
 #include <time.h>

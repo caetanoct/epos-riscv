@@ -15,7 +15,6 @@ volatile unsigned int Thread::_thread_count;
 Scheduler_Timer * Thread::_timer;
 Scheduler<Thread> Thread::_scheduler;
 
-
 void Thread::constructor_prologue(unsigned int stack_size)
 {
     lock();
