@@ -23,4 +23,4 @@ Após a apresentação de segunda-feira (03/05), arrumamos os problemas apontado
 pelo professor referentes aos parâmetros e retorno da syscall, a implementação
 da pilha e tentamos resolver o caso dos métodos de serialização. Porém não
 conseguimos descobrir a causa do problema de referência e não conseguimos
-executar e testar o que implementamos
+executar e testar o que implementamos.
