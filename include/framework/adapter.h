@@ -46,6 +46,7 @@ public:
     void resume() { enter(); Component::resume(); leave(); }
     int join() { enter(); int res = Component::join(); leave(); return res; }
     void pass() { enter(); Component::pass(); leave(); }
+    static void wakeup_all(Thread::Queue * q) { static_enter(); Component::wakeup_all(q); static_leave(); }
     static void yield() { static_enter(); Component::yield(); static_leave(); }
     static void exit(int status) { static_enter(); Component::exit(status); static_leave(); }
 

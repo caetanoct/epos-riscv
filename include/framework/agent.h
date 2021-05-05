@@ -53,6 +53,7 @@ private:
     void handle_clock();
     void handle_alarm();
     void handle_chronometer();
+    void handle_ipc();
     void handle_utility();
 
 private:
@@ -99,6 +100,11 @@ void Agent::handle_thread()
         break;
     case THREAD_YIELD:
         Thread::yield();
+        break;
+    case THREAD_WAKEUP_ALL:
+        Thread::Queue * q;
+        in(q);
+        Adapter<Thread>::wakeup_all(q);
         break;
     case THREAD_WAIT_NEXT:
         Periodic_Thread::wait_next();
@@ -172,11 +178,11 @@ void Agent::handle_address_space()
     case CREATE:
         id(Id(ADDRESS_SPACE_ID, reinterpret_cast<Id::Unit_Id>(new Adapter<Address_Space>())));
         break;
-    case CREATE1:
+    case CREATE1: {
         MMU::Page_Directory * pd;
         in(pd);
         id(Id(ADDRESS_SPACE_ID, reinterpret_cast<Id::Unit_Id>(new Adapter<Address_Space>(pd))));
-        break;
+    } break;
     case DESTROY:
         delete as;
         break;
@@ -298,6 +304,11 @@ void Agent::handle_semaphore()
     switch(method()) {
     case CREATE:
         id(Id(SEMAPHORE_ID, reinterpret_cast<Id::Unit_Id>(new Adapter<Semaphore>())));
+        break;
+    case CREATE1:
+        int v;
+        in(v);
+        id(Id(SEMAPHORE_ID, reinterpret_cast<Id::Unit_Id>(new Adapter<Semaphore>(v))));
         break;
     case DESTROY:
         delete sem;
@@ -467,6 +478,9 @@ void Agent::handle_chronometer()
     result(res);
 };
 
+void Agent::handle_ipc() {
+    result(UNDEFINED);
+}
 
 void Agent::handle_utility()
 {

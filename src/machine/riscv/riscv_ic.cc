@@ -17,7 +17,7 @@ static void * msg;
 void IC::entry()
 {
     ASM("# Save context                                                 \n"
-        "        addi        sp,     sp,   -132                         \n"
+        "        addi        sp,     sp,   -136                         \n"
         "        sw          x1,   4(sp)                                \n"
         "        sw          x2,   8(sp)                                \n"
         "        sw          x3,  12(sp)                                \n"     // we don't save x4 (tp) because it can change across context switches and it is not ment be used by the compiler at application-level.
@@ -52,24 +52,41 @@ if(sup)
     ASM("        csrr       x31, sstatus                                \n"
         "        sw         x31, 124(sp)                                \n"
         "        csrr       x31, sepc                                   \n"
-        "        sw         x31, 128(sp)                                \n");
+        "        sw         x31, 128(sp)                                \n"
+        "        csrr       x31, scause                                 \n"
+        "        sw         x31, 132(sp)                                \n");
 else
     ASM("        csrr       x31, mstatus                                \n"
         "        sw         x31, 124(sp)                                \n"
         "        csrr       x31, mepc                                   \n"
-        "        sw         x31, 128(sp)                                \n");
-if (CPU::syscallMask() == 9) {
+        "        sw         x31, 128(sp)                                \n"
+        "        csrr       x31, mcause                                 \n"
+        "        sw         x31, 132(sp)                                \n");
+
+if (CPU::scause() == 9) {
     msg = (void *) CPU::a0();
 }
     ASM("        la          ra, .restore                               \n" // set LR to restore context before returning
         "        j          %0                                          \n"
         "                                                               \n"
         "# Restore context                                              \n"
-        ".restore:                                                      \n"
-        "        lw         x31, 128(sp)                                \n"
-        "        add        x31, x31, x10                               \n"
-        "        csrw      sepc, x31                                    \n"
-        "        lw          x1,   4(sp)                                \n"
+        ".restore:                                                      \n" : : "i"(&dispatch));
+
+if (sup) {
+    CPU::Reg scause;
+    CPU::Reg sepc;
+    
+    ASM("        lw         %0,         128(sp)                           \n" : "=r" (sepc) : :);
+    ASM("        lw         %0,         132(sp)                           \n" : "=r" (scause) : :);
+
+    if (scause == 9) 
+        sepc = sepc + 4;
+    
+    CPU::sepc(sepc);
+
+}
+
+    ASM("        lw          x1,   4(sp)                                \n"
         "        lw          x2,   8(sp)                                \n"
         "        lw          x3,  12(sp)                                \n"
         "        lw          x5,  16(sp)                                \n"
@@ -97,12 +114,11 @@ if (CPU::syscallMask() == 9) {
         "        lw         x27, 104(sp)                                \n"
         "        lw         x28, 108(sp)                                \n"
         "        lw         x29, 112(sp)                                \n"
-        "        lw         x30, 116(sp)                                \n" : : "i"(&dispatch));
+        "        lw         x30, 116(sp)                                \n");
 if(sup)
     ASM("        lw         x31, 124(sp)                                \n"
-        "        csrw   sstatus, x31                                    \n"
-        "        lw         x31, 128(sp)                                \n"
-        "        csrw      sepc, x31                                    \n");
+        "        csrw   sstatus, x31                                    \n");
+
 else
     ASM("        lw         x31, 124(sp)                                \n"
         "        csrw   mstatus, x31                                    \n"
@@ -110,7 +126,7 @@ else
         "        csrw      mepc, x31                                    \n");
 
     ASM("        lw         x31, 120(sp)                                \n"
-        "        addi        sp, sp,    132                             \n");
+        "        addi        sp, sp,    136                             \n");
 if(sup)
     ASM("        sret                                                   \n");
 else
@@ -119,9 +135,6 @@ else
 
 void IC::dispatch()
 {
-    // Salvar msg
-    CPU::x31(CPU::a0());
-
     Interrupt_Id id = int_id();
 
     if((id != INT_SYS_TIMER) || Traits<IC>::hysterically_debugged)
@@ -188,7 +201,6 @@ void IC::exception(Interrupt_Id id)
         case 8: // user-mode environment call
         case 9: // supervisor-mode environment call
             CPU::syscalled(msg);
-            ASM("addi x10, x10, 4");
             break;
         case 10: // reserved... not described
         case 11: // machine-mode environment call

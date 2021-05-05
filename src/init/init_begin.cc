@@ -16,7 +16,7 @@ class Init_Begin
 public:
     Init_Begin() {
         // Init is not linked with crts0, so we must handle BSS here for kernels
-	if(Traits<Build>::MODE == Traits<Build>::KERNEL)
+	    if(Traits<Build>::MODE == Traits<Build>::KERNEL)
             memset(reinterpret_cast<void *>(__bss_start), 0, _end - __bss_start);
 
         Machine::pre_init(System::info());

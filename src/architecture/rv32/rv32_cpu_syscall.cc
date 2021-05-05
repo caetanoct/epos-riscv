@@ -6,7 +6,7 @@ __BEGIN_SYS
 void CPU::syscall(void * message)
 {   
     ASM("mv %0, a0" :  "=r"(message)); 
-    ASM("ecall");
+    CPU::ecall();
 }
 
 __END_SYS

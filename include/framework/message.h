@@ -40,6 +40,7 @@ public:
         THREAD_PASS,
         THREAD_SUSPEND,
         THREAD_RESUME,
+        THREAD_WAKEUP_ALL,
         THREAD_YIELD,
         THREAD_EXIT,
         THREAD_WAIT_NEXT,
@@ -74,8 +75,6 @@ public:
 
         CLOCK_RESOLUTION = COMPONENT,
         CLOCK_NOW,
-        CLOCK_DATE,
-        CLOCK_DATE1,
 
         ALARM_DELAY = COMPONENT,
         ALARM_GET_PERIOD,

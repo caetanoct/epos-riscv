@@ -65,6 +65,7 @@ public:
     int pass() { return invoke(THREAD_PASS); }
     void suspend() { invoke(THREAD_SUSPEND); }
     void resume() { invoke(THREAD_RESUME); }
+    void wakeup_all() { invoke(THREAD_RESUME); }
     static int yield() { return static_invoke(THREAD_YIELD); }
     static void exit(int r) { static_invoke(THREAD_EXIT, r); }
     static volatile bool wait_next() { return static_invoke(THREAD_WAIT_NEXT); }

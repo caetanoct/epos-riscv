@@ -9,7 +9,7 @@ __BEGIN_SYS
 template<> struct Traits<Build>: public Traits_Tokens
 {
     // Basic configuration
-    static const unsigned int MODE = BUILTIN;
+    static const unsigned int MODE = KERNEL;
     static const unsigned int ARCHITECTURE = RV32;
     static const unsigned int MACHINE = RISCV;
     static const unsigned int MODEL = SiFive_E;
@@ -20,8 +20,8 @@ template<> struct Traits<Build>: public Traits_Tokens
     // Default flags
     static const bool enabled = true;
     static const bool monitored = false;
-    static const bool debugged = true;
-    static const bool hysterically_debugged = true;
+    static const bool debugged = false;
+    static const bool hysterically_debugged = false;
 
     // Default aspects
     typedef ALIST<> ASPECTS;
@@ -33,8 +33,8 @@ template<> struct Traits<Debug>: public Traits<Build>
 {
     static const bool error   = true;
     static const bool warning = true;
-    static const bool info    = true;
-    static const bool trace   = true;
+    static const bool info    = false;
+    static const bool trace   = false;
 };
 
 template<> struct Traits<Lists>: public Traits<Build>

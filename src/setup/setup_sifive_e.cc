@@ -100,7 +100,7 @@ Setup::Setup()
 
         Display::init();
         db<Setup>(TRC) << "Setup(bi=" << reinterpret_cast<void *>(bi) << ",sp=" << reinterpret_cast<void *>(CPU::sp()) << ")" << endl;
-        db<Setup>(INF) << "Setup:si=" << *si << endl;
+        // db<Setup>(INF) << "Setup:si=" << *si << endl;
 
         if(si->bm.n_cpus > Traits<Machine>::CPUS)
             si->bm.n_cpus = Traits<Machine>::CPUS;
