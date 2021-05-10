@@ -6,6 +6,8 @@
 
 extern "C" { void _int_entry() __attribute__ ((nothrow, alias("_ZN4EPOS1S2IC5entryEv"))); }
 
+// extern "C" { void _exit(int s); }
+
 __BEGIN_SYS
 
 // Class attributes
@@ -188,6 +190,7 @@ void IC::exception(Interrupt_Id id)
         case 14: // reserved... not described
         case 15: // Store Page Table failure
             db<IC, System>(WRN) << " => data abort";
+            // _exit(-1);
             break;
         default:
             int_not(id);

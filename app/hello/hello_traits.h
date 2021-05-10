@@ -9,7 +9,7 @@ __BEGIN_SYS
 template<> struct Traits<Build>: public Traits_Tokens
 {
     // Basic configuration
-    static const unsigned int MODE = BUILTIN;
+    static const unsigned int MODE = KERNEL;
     static const unsigned int ARCHITECTURE = RV32;
     static const unsigned int MACHINE = RISCV;
     static const unsigned int MODEL = SiFive_E;
@@ -34,7 +34,7 @@ template<> struct Traits<Debug>: public Traits<Build>
     static const bool error   = true;
     static const bool warning = true;
     static const bool info    = false;
-    static const bool trace   = false;
+    static const bool trace   = true;
 };
 
 template<> struct Traits<Lists>: public Traits<Build>

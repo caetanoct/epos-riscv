@@ -45,7 +45,8 @@ public:
             SYS  = (V | R | W | X),
             IO   = (SYS | MIO),
             DMA  = (SYS | CT),
-            MASK = (1 << 10) - 1
+            MASK = (1 << 10) - 1,
+
         };
 
     public:
