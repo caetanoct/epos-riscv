@@ -22,10 +22,16 @@ public:
         // Initialize Application's heap
         db<Init>(INF) << "Initializing application's heap: " << endl;
         if(Traits<System>::multiheap) { // heap in data segment arranged by SETUP
-            char * heap = MMU::align_page(&_end);
             if(Traits<Build>::MODE != Traits<Build>::KERNEL) // if not a kernel, then use the stack allocated by SETUP, otherwise make that part of the heap
-                heap += MMU::align_page(Traits<Application>::STACK_SIZE);
-            Application::_heap = new (&Application::_preheap[0]) Heap(heap, HEAP_SIZE);
+                Application::_heap = new (&Application::_preheap[0]) Heap(
+                    MMU::align_page(Traits<Machine>::APP_HEAP) + MMU::align_page(Traits<Application>::STACK_SIZE), 
+                    HEAP_SIZE
+                );
+            else 
+                Application::_heap = new (&Application::_preheap[0]) Heap(
+                    MMU::align_page(Traits<Machine>::APP_HEAP), 
+                    HEAP_SIZE
+                );
         } else
             for(unsigned int frames = MMU::allocable(); frames; frames = MMU::allocable())
                 System::_heap->free(MMU::alloc(frames), frames * sizeof(MMU::Page));

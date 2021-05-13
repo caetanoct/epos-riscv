@@ -41,11 +41,13 @@ private:
 
 public:
     typedef CPU::Phy_Addr Phy_Addr;
+    typedef CPU::Log_Addr Log_Addr;
     typedef MMU::Flags Flags;
 
 public:
     Segment(unsigned int bytes, Flags flags = Flags::APP);
     Segment(Phy_Addr phy_addr, unsigned int bytes, Flags flags);
+    Segment(Log_Addr log_addr, unsigned int bytes, Flags flags, bool perceive);
     ~Segment();
 
     unsigned int size() const;

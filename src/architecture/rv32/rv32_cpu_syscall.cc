@@ -7,8 +7,8 @@ __BEGIN_SYS
 
 void CPU::syscall(void * message)
 {
-    CPU::a1(reinterpret_cast<CPU::Reg>(message));
-    CPU::ecall();
+  CPU::a0(reinterpret_cast<CPU::Reg>(message));
+  CPU::ecall();
 }
 
 __END_SYS

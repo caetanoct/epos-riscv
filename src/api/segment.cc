@@ -18,6 +18,10 @@ Segment::Segment(Phy_Addr phy_addr, unsigned int bytes, Flags flags): Chunk(phy_
     db<Segment>(TRC) << "Segment(bytes=" << bytes << ",phy_addr=" << phy_addr << ",flags=" << flags << ") [Chunk::pt=" << Chunk::pt() << ",sz=" << Chunk::size() << "] => " << this << endl;
 }
 
+Segment::Segment(Log_Addr log_addr, unsigned int bytes, Flags flags, bool perceive): Chunk(log_addr, bytes, flags, perceive)
+{
+    db<Segment>(TRC) << "Segment(bytes=" << bytes << ",log_addr=" << log_addr << ",flags=" << flags << ") [Chunk::pt=" << Chunk::pt() << ",sz=" << Chunk::size() << "] => " << this << endl;
+}
 
 Segment::~Segment()
 {

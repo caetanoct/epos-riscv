@@ -7,6 +7,7 @@
 
 #include <memory.h>
 #include <time.h>
+#include <real-time.h>
 #include <synchronizer.h>
 
 #include "message.h"
@@ -110,7 +111,7 @@ void Agent::handle_thread()
         Thread::yield();
         break;
     case THREAD_WAIT_NEXT:
-        //            Periodic_Thread::wait_next();
+        Periodic_Thread::wait_next();
         break;
     case THREAD_EXIT: {
         int r;
@@ -371,7 +372,6 @@ void Agent::handle_alarm()
     switch(method()) {
     case CREATE1: // object Delay, which has Type<Delay>::ID set to ALARM_ID to save additional handling
     case ALARM_DELAY: {
-        db<Framework>(TRC) << "Handle(BABA2)" << endl;
         Microsecond time;
         in(time);
         Adapter<Alarm>::delay(time);
@@ -413,7 +413,47 @@ void Agent::handle_alarm()
 
 void Agent::handle_chronometer()
 {
-    result(UNDEFINED);
+    Adapter<Alarm> * alarm = reinterpret_cast<Adapter<Alarm> *>(id().unit());
+    Result res = 0;
+
+    switch(method()) {
+    case CREATE2: {
+        Microsecond time;
+        Handler * handler;
+        in(time, handler);
+        id(Id(ALARM_ID, reinterpret_cast<Id::Unit_Id>(new Adapter<Alarm>(time, handler))));
+    } break;
+    case CREATE3: {
+        Microsecond time;
+        Handler * handler;
+        int times;
+        in(time, handler, times);
+        id(Id(ALARM_ID, reinterpret_cast<Id::Unit_Id>(new Adapter<Alarm>(time, handler, times))));
+    } break;
+    case DESTROY:
+        delete alarm;
+        break;
+    case ALARM_GET_PERIOD:
+        res = alarm->period();
+    break;
+    case ALARM_SET_PERIOD: {
+        Microsecond p;
+        in(p);
+        alarm->period(p);
+    } break;
+    case ALARM_FREQUENCY:
+        res = Adapter<Alarm>::alarm_frequency();
+    break;
+    case ALARM_DELAY: {
+        Microsecond time;
+        in(time);
+        Adapter<Alarm>::delay(time);
+    } break;
+    default:
+        res = UNDEFINED;
+    }
+
+    result(res);
 };
 
 

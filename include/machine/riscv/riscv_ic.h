@@ -95,7 +95,8 @@ public:
         HARD_INT        = CPU::EXCEPTIONS,
         INT_SYS_TIMER   = HARD_INT + (sup ? IRQ_SUP_TIMER : IRQ_MAC_TIMER),
         INT_RESCHEDULER = HARD_INT + (sup ? IRQ_SUP_SOFT : IRQ_MAC_SOFT),  // an IPI is mapped to the machine with mcause set to IRQ_MAC_SOFT
-        INT_SYSCALL     = CPU::EXC_ENVS
+        INT_SYSCALL     = CPU::EXC_ENVU,
+        INT_IHARDFAULT  = CPU::EXC_IHARDFAULT
     };
 
 public:

@@ -46,8 +46,9 @@ public:
             CD  = 0x010, // Cache Disable (0=cacheable, 1=non-cacheable)
             CT  = 0x020, // Contiguous (0=non-contiguous, 1=contiguous)
             IO  = 0x040, // Memory Mapped I/O (0=memory, 1=I/O)
-            SYS = (PRE | RW ),
-            APP = (PRE | RW | USR)
+            EXEC = 0x080,
+            SYS = (PRE | RW | EXEC),
+            APP = (PRE | RW | EXEC | USR)
         };
 
     public:

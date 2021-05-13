@@ -90,6 +90,7 @@ if(sup)
         "       csrs    sstatus,   x3           \n"     // set sstatus for sret
         "       lw       x3, -116(sp)           \n"     // pop pc
         "       csrw    sepc,      x3           \n"     // move pc to sepc for sret
+        "       lw      sp,     0(sp)           \n"     // remember usp
         "       sret                            \n");
 else
     ASM("       lw       x3, -120(sp)           \n"     // pop st
@@ -102,7 +103,10 @@ else
 void CPU::switch_context(Context ** o, Context * n)
 {   
     // Push the context into the stack and update "o"
-    ASM("       sw       x1, -116(sp)           \n"     // push the return address as pc
+    ASM("       sw       sp,   120(%0)          \n"
+        "       mv       sp,    %0              \n"
+        "       addi     sp, sp,  120           \n"
+        "       sw       x1, -116(sp)           \n"     // push the return address as pc
         "       sw       x1, -112(sp)           \n"     // push ra
         "       sw       x5, -108(sp)           \n"     // push x5-x31
         "       sw       x6, -104(sp)           \n"
@@ -130,15 +134,15 @@ void CPU::switch_context(Context ** o, Context * n)
         "       sw      x28,  -16(sp)           \n"
         "       sw      x29,  -12(sp)           \n"
         "       sw      x30,   -8(sp)           \n"
-        "       sw      x31,   -4(sp)           \n");
+        "       sw      x31,   -4(sp)           \n"
+        "       li      x31,     1 << 8         \n" 
+        "       csrs    sstatus, x31                \n" : : "r"(*o) :);
 if(sup)
     ASM("       csrr    x31,  sstatus           \n");   // get sstatus
 else
     ASM("       csrr    x31,  mstatus           \n");   // get mstatus
 
-    ASM("       sw      x31, -120(sp)           \n"     // push st
-        "       addi     sp,      sp,   -120    \n"     // complete the pushes above by adjusting the SP
-        "       sw       sp,    0(a0)           \n");   // update Context * volatile * o
+    ASM("       sw      x31, -120(sp)           \n");     // push st
 
     // Set the stack pointer to "n" and pop the context from the stack
     ASM("       mv       sp,      a1            \n"     // get Context * volatile n into SP
@@ -177,11 +181,10 @@ else
         "       lw      x29,  -12(sp)           \n"
         "       lw      x31, -120(sp)           \n");   // pop st
 if(sup)
-    ASM("       li      x30,   1 << 8           \n"     // set sstatus.MPP = supervisor through x30
-        "       or      x31, x31, x30           \n"     // machine mode on MPP is needed to avoid errors on mret (when dealing with machine mode)
-        "       csrw    sstatus, x31            \n"
+    ASM("       csrw    sstatus, x31            \n"
         "       lw      x30,   -8(sp)           \n"
         "       lw      x31,   -4(sp)           \n"
+        "       lw      sp,     0(sp)           \n"
         "       sret                            \n");
 else
     ASM("       li      x30,  3 << 11           \n"     // set sstatus.MPP = machine through x30

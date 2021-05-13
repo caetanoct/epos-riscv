@@ -11,11 +11,13 @@ __BEGIN_SYS
 // Class attributes
 IC::Interrupt_Handler IC::_int_vector[IC::INTS];
 
+static void * msg;
+
 // Class methods
 void IC::entry()
 {
     ASM("# Save context                                                 \n"
-        "        addi        sp,     sp,   -132                         \n"
+        "        addi        sp,     sp,   -136                         \n"
         "        sw          x1,   4(sp)                                \n"
         "        sw          x2,   8(sp)                                \n"
         "        sw          x3,  12(sp)                                \n"     // we don't save x4 (tp) because it can change across context switches and it is not ment be used by the compiler at application-level.
@@ -50,22 +52,41 @@ if(sup)
     ASM("        csrr       x31, sstatus                                \n"
         "        sw         x31, 124(sp)                                \n"
         "        csrr       x31, sepc                                   \n"
-        "        sw         x31, 128(sp)                                \n");
+        "        sw         x31, 128(sp)                                \n"
+        "        csrr       x31, scause                                 \n"
+        "        sw         x31, 132(sp)                                \n");
 else
     ASM("        csrr       x31, mstatus                                \n"
         "        sw         x31, 124(sp)                                \n"
         "        csrr       x31, mepc                                   \n"
-        "        sw         x31, 128(sp)                                \n");
+        "        sw         x31, 128(sp)                                \n"
+        "        csrr       x31, mcause                                 \n"
+        "        sw         x31, 132(sp)                                \n");
 
+if (CPU::scause() == 8 || CPU::scause() == 12) {
+    msg = (void *) CPU::a0();
+}
     ASM("        la          ra, .restore                               \n" // set LR to restore context before returning
         "        j          %0                                          \n"
         "                                                               \n"
         "# Restore context                                              \n"
-        ".restore:                                                      \n"
-        "        lw         x31, 128(sp)                                \n"
-        "        add        x31, x31, x10                               \n" // x10 (a0) is set by the handler to adjust sepc to point to the next instruction if needed
-        "        csrw      sepc, x31                                    \n"
-        "        lw          x1,   4(sp)                                \n"
+        ".restore:                                                      \n" : : "i"(&dispatch));
+
+if (sup) {
+    CPU::Reg scause;
+    CPU::Reg sepc;
+    
+    ASM("        lw         %0,         128(sp)                           \n" : "=r" (sepc) : :);
+    ASM("        lw         %0,         132(sp)                           \n" : "=r" (scause) : :);
+
+    if (scause == 8) 
+        sepc = sepc + 4;
+    
+    CPU::sepc(sepc);
+
+}
+
+    ASM("        lw          x1,   4(sp)                                \n"
         "        lw          x2,   8(sp)                                \n"
         "        lw          x3,  12(sp)                                \n"
         "        lw          x5,  16(sp)                                \n"
@@ -93,10 +114,11 @@ else
         "        lw         x27, 104(sp)                                \n"
         "        lw         x28, 108(sp)                                \n"
         "        lw         x29, 112(sp)                                \n"
-        "        lw         x30, 116(sp)                                \n" : : "i"(&dispatch));
+        "        lw         x30, 116(sp)                                \n");
 if(sup)
     ASM("        lw         x31, 124(sp)                                \n"
         "        csrw   sstatus, x31                                    \n");
+
 else
     ASM("        lw         x31, 124(sp)                                \n"
         "        csrw   mstatus, x31                                    \n"
@@ -104,7 +126,7 @@ else
         "        csrw      mepc, x31                                    \n");
 
     ASM("        lw         x31, 120(sp)                                \n"
-        "        addi        sp, sp,    132                             \n");
+        "        addi        sp, sp,    136                             \n");
 if(sup)
     ASM("        sret                                                   \n");
 else
@@ -135,9 +157,6 @@ void IC::dispatch()
     }
 
     _int_vector[id](id);
-
-    if(id > HARD_INT)
-        CPU::a0(0); // PC is automatically incremented for hardware interrupts and each exception must decide if and how it wants to adjust PC by setting the value to be added as CPU::fr()
 }
 
 void IC::int_not(Interrupt_Id id)
@@ -158,7 +177,7 @@ void IC::exception(Interrupt_Id id)
     CPU::Reg tval = sup ? CPU::stval() : CPU::mtval();
     CPU::Reg sp = CPU::sp();
 
-    db<IC,System>(WRN) << "IC::Exception(" << id << ") => {" << hex << "status=" << status << ",cause=" << cause << ",hartid=" << hartid << ",epc=" << epc << ",tval=" << tval << ",sp=" << sp <<  "}" << dec;
+    db<IC,System>(TRC) << "IC::Exception(" << id << ") => {" << hex << "status=" << status << ",cause=" << cause << ",hartid=" << hartid << ",epc=" << epc << ",tval=" << tval << ",sp=" << sp <<  "}" << dec;
 
     switch(id) {
         case 0: // unaligned Instruction
@@ -178,6 +197,8 @@ void IC::exception(Interrupt_Id id)
             db<IC, System>(WRN) << " => data error (unaligned)";
             break;
         case 8: // user-mode environment call
+            CPU::syscalled(msg);
+            break;
         case 9: // supervisor-mode environment call
         case 10: // reserved... not described
         case 11: // machine-mode environment call
@@ -198,8 +219,6 @@ void IC::exception(Interrupt_Id id)
         db<IC, System>(ERR) << endl;
     else
         db<IC, System>(WRN) << endl;
-
-    CPU::a0(sizeof(void *)); // PC = PC + 4 on return
 }
 
 __END_SYS

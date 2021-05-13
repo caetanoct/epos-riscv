@@ -29,8 +29,8 @@ void Thread::init()
 
     if(Traits<System>::multitask) {
         new (SYSTEM) Task(new (SYSTEM) Address_Space(MMU::current()),
-                          new (SYSTEM) Segment(Log_Addr(si->lm.app_code), si->lm.app_code_size, Segment::Flags::APP),
-                          new (SYSTEM) Segment(Log_Addr(si->lm.app_data), si->lm.app_data_size, Segment::Flags::APP),
+                          new (SYSTEM) Segment(Log_Addr(si->lm.app_code), si->lm.app_code_size, MMU::Page_Flags::APP, true),
+                          new (SYSTEM) Segment(Log_Addr(si->lm.app_data), si->lm.app_data_size, MMU::Page_Flags::APP, true),
                           main,
                           Log_Addr(Memory_Map::APP_CODE), Log_Addr(Memory_Map::APP_DATA),
                           static_cast<int>(si->lm.app_extra_size), reinterpret_cast<char **>(si->lm.app_extra));

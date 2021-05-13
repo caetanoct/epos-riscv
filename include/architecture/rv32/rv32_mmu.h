@@ -41,7 +41,7 @@ public:
             D    = 1 << 7, // Dirty
             CT   = 1 << 8, // Contiguous (reserved for use by supervisor RSW)
             MIO  = 1 << 9, // I/O (reserved for use by supervisor RSW)
-            APP  = (V | R | W | X),
+            APP  = (V | R | W | X | U),
             SYS  = (V | R | W | X),
             IO   = (SYS | MIO),
             DMA  = (SYS | CT),
@@ -142,6 +142,19 @@ public:
         Chunk(Phy_Addr phy_addr, unsigned int bytes, Flags flags)
         : _from(0), _to(pages(bytes)), _pts(page_tables(_to - _from)), _flags(Page_Flags(flags)), _pt(calloc(_pts, WHITE)) {
             _pt->remap(phy_addr, _from, _to, flags);
+        }
+
+        Chunk(Log_Addr log_addr, unsigned int bytes, Flags flags, bool perceive)
+        : _from(0), _to(pages(bytes)), _pts(page_tables(_to - _from)), _flags(Page_Flags(flags)), _pt(calloc(_pts, WHITE)) {
+            if (!perceive) 
+                _pt->remap(log_addr, _from, _to, flags | Flags::IO);
+            else {
+                unsigned int pd_index = directory(log_addr);
+                PD_Entry * curr =  (PD_Entry *) current();
+                _pt = pde2phy(curr[pd_index]);
+                _pt->remap(log_addr, _from, _to, flags | Flags::IO);
+            }
+            
         }
 
         ~Chunk() {
@@ -365,6 +378,7 @@ public:
 
         if(frame && n) {
             List::Element * e = new (phy2log(frame)) List::Element(frame, n);
+            db<MMU>(TRC) << "List::Element * e = new (phy2log(frame)) List::Element(frame, n);" << endl;
             List::Element * m1, * m2;
             _free[color].insert_merging(e, &m1, &m2);
         }
@@ -399,7 +413,7 @@ public:
     static Phy_Addr pde2phy(PD_Entry entry) { return (entry & ~Page_Flags::MASK) << 2; }
 
     static void flush_tlb() {
-        //TODO
+        ASM("sfence.vma");
     }
     static void flush_tlb(Log_Addr addr) {
         //TODO

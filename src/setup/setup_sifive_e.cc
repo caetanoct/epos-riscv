@@ -74,6 +74,7 @@ private:
 
     void setup_sys_pt();
     void setup_sys_pd();
+    void setup_app_pt();
     void enable_paging();
 
     void load_parts();
@@ -118,6 +119,7 @@ Setup::Setup()
 
             // Configure the memory model defined above
             setup_sys_pt();
+            setup_app_pt();
             setup_sys_pd();
 
             // Enable paging
@@ -372,6 +374,12 @@ void Setup::build_pmm()
     top_page -= MMU::pages(si->lm.sys_stack_size);
     si->pmm.sys_stack = top_page * sizeof(Page);
 
+    // APP data
+    top_page -= MMU::page_tables(MMU::pages(Traits<Machine>::HEAP_SIZE));
+    si->pmm.app_data_pts = top_page * sizeof(Page);
+    top_page -= MMU::pages(Traits<Machine>::HEAP_SIZE);
+    si->pmm.app_data = top_page * sizeof(Page);
+
     // The memory allocated so far will "disappear" from the system as we set mem_top as follows:
     si->pmm.usr_mem_base = si->bm.mem_base;
     si->pmm.usr_mem_top = top_page * sizeof(Page);
@@ -474,6 +482,16 @@ void Setup::setup_sys_pt()
     db<Setup>(INF) << "SYS_PT=" << *reinterpret_cast<Page_Table *>(sys_pt) << endl;
 }
 
+void Setup::setup_app_pt()
+{
+    PT_Entry *pte_addr = reinterpret_cast<PD_Entry *>((void *)si->pmm.app_data_pts);
+    memset(pte_addr, 0, sizeof(Page));
+    PT_Entry entry;
+    for(unsigned int i = 0, entry = si->pmm.app_data; i < MMU::pages(Traits<Machine>::HEAP_SIZE); i++, entry = entry + sizeof(Page)) {
+        pte_addr[MMU::page(Traits<Machine>::APP_HEAP) + i] = MMU::phy2pte(entry, Flags::APP);
+    }    
+}
+
 void Setup::setup_sys_pd()
 {
     db<Setup>(TRC) << "setup_sys_pd(bm="
@@ -537,6 +555,11 @@ void Setup::setup_sys_pd()
     assert((MMU::directory(MMU::align_directory(IO)) + n_pts) < (MMU::PD_ENTRIES - 3)); // check if it would overwrite the OS
     for(unsigned int i = MMU::directory(MMU::align_directory(IO)), j = 0; i < MMU::directory(MMU::align_directory(IO)) + n_pts; i++, j++)
         sys_pd[i] = MMU::phy2pde((si->pmm.io_pts + j * sizeof(Page)));
+
+    n_pts = MMU::page_tables(MMU::pages(Traits<Machine>::HEAP_SIZE));
+    for(unsigned int i = MMU::directory(MMU::align_directory(Traits<Machine>::APP_HEAP)), j = 0; i < MMU::directory(MMU::align_directory(Traits<Machine>::APP_HEAP)) + n_pts; i++, j++) {
+        sys_pd[i] = MMU::phy2pde(si->pmm.app_data_pts+ j * sizeof(Page));
+    }
 
     // Attach the OS (i.e. sys_pt)
     sys_pd[MMU::directory(SYS)] = MMU::phy2pde(si->pmm.sys_pt);
@@ -713,7 +736,8 @@ void _entry() // machine mode
         CLINT::mtvec(CLINT::DIRECT, Memory_Map::MEM_TOP + 1 - sizeof(MMU::Page));  // setup a machine mode interrupt handler to forward timer interrupts (which cannot be delegated via mideleg)
         CPU::mideleg(0xffff);                           // delegate all interrupts to supervisor mode
         CPU::medeleg(0xffff);                           // delegate all exceptions to supervisor mode
-        CPU::mstatuss(CPU::MPP_S | CPU::MPIE);          // prepare jump into supervisor mode and reenable of interrupts at mret
+        CPU::mstatuss(CPU::MPP_S | CPU::MPIE | CPU::SUM);          // prepare jump into supervisor mode and reenable of interrupts at mret
+        CPU::sstatus(CPU::SUM);
     } else {
         CLINT::mtvec(CLINT::DIRECT, _int_entry);
         CPU::mstatus(CPU::MPP_M | CPU::MPIE);           // stay in machine mode and reenable interrupts at mret

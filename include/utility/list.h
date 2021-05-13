@@ -1355,6 +1355,19 @@ public:
         return e;
     }
 
+    Element * search_worst(unsigned int s) {
+        Element * e = head();
+        Element * largest = e;
+
+        for (unsigned int i = 0; i < size() - 1; i++) {
+            e = e->next();
+            if (e->size() > largest->size())
+                largest = e;
+        }
+
+        return largest;
+    }
+
     void insert_merging(Element * e, Element ** m1, Element ** m2) {
         db<Lists>(TRC) << "Grouping_List::insert_merging(e=" << e << ")" << endl;
 
@@ -1381,7 +1394,7 @@ public:
         print_head();
         print_tail();
 
-        Element * e = search_size(s);
+        Element * e = search_worst(s);
         if(e) {
             e->shrink(s);
             _grouped_size -= s;

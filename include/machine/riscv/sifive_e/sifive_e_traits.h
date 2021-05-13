@@ -35,7 +35,8 @@ template<> struct Traits<Machine>: public Traits<Machine_Common>
     static const unsigned int INIT              = 0x87f00000;   // MEM_TOP - 1 MB (will be part of the free memory at INIT)
 
     static const unsigned int APP_LOW           = 0x80400000;   // 2 GB + 4 MB
-    static const unsigned int APP_HIGH          = 0xdfffffff;   // 2 GB + 1536 MB (max 1535 MB of APP)
+    static const unsigned int APP_HIGH          = 0xdeffffff;   // 2 GB + 1536 MB (max 1535 MB of APP)
+    static const unsigned int APP_HEAP          = 0xdf000000;   
 
     static const unsigned int PHY_MEM           = 0x20000000;   // 512 MB (max 1536 MB of RAM)
     static const unsigned int IO                = 0x00000000;   // 0 (max 512 MB of IO = MIO_TOP - MIO_BASE)

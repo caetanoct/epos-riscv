@@ -3,6 +3,7 @@
 #include <architecture/cpu.h>
 #include <machine/ic.h>
 #include <machine/timer.h>
+#include <process.h>
 
 __BEGIN_SYS
 
@@ -19,13 +20,13 @@ void IC::init()
     for(Interrupt_Id i = 0; i < CPU::EXCEPTIONS; i++)
         _int_vector[i] = &exception;
 
-    // Install the syscall trap handler
-    if(Traits<Build>::MODE == Traits<Build>::KERNEL)
-        _int_vector[INT_SYSCALL] = &CPU::syscalled;
-
     // Set all interrupt handlers to int_not()
     for(Interrupt_Id i = HARD_INT; i < INTS; i++)
         _int_vector[i] = int_not;
+
+    _int_vector[INT_IHARDFAULT] = [](Interrupt_Id id) {
+        Thread::exit(-1);
+    };
 }
 
 __END_SYS

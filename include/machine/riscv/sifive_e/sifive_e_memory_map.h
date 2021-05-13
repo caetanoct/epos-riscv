@@ -38,6 +38,7 @@ struct Memory_Map
         APP_CODE        = APP_LOW,
         APP_DATA        = Traits<System>::multitask ? APP_LOW + 4 * 1024 * 1024 : APP_LOW,
         APP_HIGH        = Traits<Machine>::APP_HIGH,
+        APP_HEAP        = Traits<Machine>::APP_HEAP,
 
         PHY_MEM         = Traits<Machine>::PHY_MEM,
         IO              = Traits<Machine>::IO,

@@ -73,7 +73,7 @@ public:
     };
 
     // Exceptions (mcause with interrupt = 0)
-    static const unsigned int EXCEPTIONS = 12;
+    static const unsigned int EXCEPTIONS = 13;
     enum {
         EXC_IALIGN      = 0,    // Instruction address misaligned
         EXC_IFAULT      = 1,    // Instruction access fault
@@ -86,7 +86,8 @@ public:
         EXC_ENVU        = 8,    // Environment call from U-mode
         EXC_ENVS        = 9,    // Environment call from S-mode
         EXC_ENVH        = 10,   // Environment call from H-mode
-        EXC_ENVM        = 11    // Environment call from M-mode
+        EXC_ENVM        = 11,    // Environment call from M-mode
+        EXC_IHARDFAULT   = 12
     };
 
     // Context
@@ -94,7 +95,10 @@ public:
     {
     public:
         // Contexts are loaded with [m|s]ret, which gets pc from [m|s]epc and updates some bits of [m|s]status, that's why _st is initialized with [M|S]PIE and [M|S]PP
-        Context(const Log_Addr & entry, const Log_Addr & exit): _st(sup ? (SPIE | SPP_S) : (MPIE | MPP_M)), _pc(entry), _x1(exit) {
+        Context(const Log_Addr & entry, const Log_Addr & exit, bool has_usp)
+            : _st(sup ? (has_usp ? (SPIE | SPP_U | SUM) : (SPIE | SPP_S | SUM)) : (MPIE | MPP_M)), 
+              _pc(entry), _x1(exit) 
+        {
             if(Traits<Build>::hysterically_debugged || Traits<Thread>::trace_idle) {
                                                                         _x5 =  5;  _x6 =  6;  _x7 =  7;  _x8 =  8;  _x9 =  9;
                 _x10 = 10; _x11 = 11; _x12 = 12; _x13 = 13; _x14 = 14; _x15 = 15; _x16 = 16; _x17 = 17; _x18 = 18; _x19 = 19;
@@ -223,7 +227,7 @@ public:
     static void switch_context(Context ** o, Context * n) __attribute__ ((naked));
 
     static void syscall(void * message);
-    static void syscalled(unsigned int int_id);
+    static void syscalled(void * message);
 
     template<typename T>
     static T tsl(volatile T & lock) {
@@ -287,13 +291,27 @@ public:
     using CPU_Common::ntohl;
     using CPU_Common::ntohs;
 
-    template<typename ... Tn>
-    static Context * init_stack(Log_Addr usp, Log_Addr sp, void (* exit)(), int (* entry)(Tn ...), Tn ... an) {
+	template<typename ... Tn>
+	static Context * init_stack(Log_Addr usp, Log_Addr sp, void (* exit)(), int (* entry)(Tn ...), Tn ... an) {
+        sp -= sizeof(Log_Addr);
+        
+        if (sup) {
+            sp -= sizeof(Log_Addr);
+        }
+
+        Log_Addr sp_before_context = sp;
         sp -= sizeof(Context);
-        Context * ctx = new(sp) Context(entry, exit);
-        init_stack_helper(&ctx->_x10, an ...); // x10 is a0
+
+		Context * ctx = new(sp) Context(entry, exit, usp != 0);
+		init_stack_helper(&ctx->_x10, an ...);// x10 is a0
+
+        if (sup)
+			*static_cast<Log_Addr *>(sp_before_context) =  
+                usp ? usp - sizeof(Log_Addr) 
+                : sp;
+
         return ctx;
-    }
+	}
 
     // In RISC-V, the main thread of each task gets parameters over registers, not the stack, and they are initialized by init_stack.
     template<typename ... Tn>
