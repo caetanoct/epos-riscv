@@ -119,6 +119,7 @@ protected:
     static void dispatch(Thread * prev, Thread * next, bool charge = true);
 
     static int idle();
+    static int not_idle();
 
 private:
     static void init();

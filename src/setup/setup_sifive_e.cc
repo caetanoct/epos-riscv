@@ -163,7 +163,7 @@ void Setup::build_lm()
     si->lm.has_stp = (si->bm.setup_offset != -1u);
     si->lm.has_ini = (si->bm.init_offset != -1u);
     si->lm.has_sys = (si->bm.system_offset != -1u);
-    si->lm.has_app = (si->bm.application_offset != -1u);
+    si->lm.has_app = (si->bm.application_offset[0] != -1u);
     si->lm.has_ext = (si->bm.extras_offset != -1u);
 
     // Check SETUP integrity and get the size of its segments
@@ -284,7 +284,7 @@ void Setup::build_lm()
     si->lm.app_data = ~0U;
     si->lm.app_data_size = 0;
     if(si->lm.has_app) {
-        ELF * app_elf = reinterpret_cast<ELF *>(&bi[si->bm.application_offset]);
+        ELF * app_elf = reinterpret_cast<ELF *>(&bi[si->bm.application_offset[0]]);
         if(!app_elf->valid()) {
             db<Setup>(ERR) << "APP ELF image is corrupted!" << endl;
             panic();
@@ -651,7 +651,7 @@ void Setup::load_parts()
     // Load APP
     if(si->lm.has_app) {
         db<Setup>(TRC) << "Setup::load_app()" << endl;
-        ELF * app_elf = reinterpret_cast<ELF *>(&bi[si->bm.application_offset]);
+        ELF * app_elf = reinterpret_cast<ELF *>(&bi[si->bm.application_offset[0]]);
         if(Traits<Setup>::hysterically_debugged) {
             db<Setup>(INF) << "Setup::app_elf: " << (void*)app_elf << endl;
             db<Setup>(INF) << "Setup::app_elf: " << MMU::Translation(app_elf) << endl;

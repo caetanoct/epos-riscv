@@ -33,7 +33,8 @@ public:
         Size setup_offset;                // Image offsets (-1 => not present)
         Size init_offset;
         Size system_offset;
-        Size application_offset;
+        Size application_offset[8];
+        unsigned int n_apps;
         Size extras_offset;
     };
 

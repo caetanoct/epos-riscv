@@ -2,7 +2,16 @@
 
 include makedefs
 
+ifndef APPS
 SUBDIRS	:= etc tools src app img
+else
+SUBDIRS := etc tools src
+export APPS
+ifndef APPLICATION
+export APPLICATION=$(word 1, $(APPS))
+endif
+endif
+
 
 all: FORCE
 ifndef APPLICATION
@@ -12,6 +21,9 @@ else
 endif
 
 all1: $(SUBDIRS)
+ifdef APPS
+	$(foreach app,$(APPS), (cd $(APP) && $(MAKE) APPLICATION=$(app));)
+endif
 
 $(SUBDIRS): FORCE
 		(cd $@ && $(MAKE))
@@ -20,10 +32,11 @@ run: FORCE
 ifndef APPLICATION
 		$(foreach app,$(APPLICATIONS),$(MAKE) APPLICATION=$(app) prerun_$(app) run1;)
 else
-		$(MAKE) run1
+		$(MAKE) all1 run1
 endif
 
-run1: etc img/$(APPLICATION)$(MACH_IMGSUFF)
+run1: FORCE
+		(cd img && $(MKBI) $(word 1, $(APPS)).img $(addprefix $(IMG)/,$(APPS)))
 		(cd img && $(MAKE) run1)
 		
 img/$(APPLICATION)$(MACH_IMGSUFF):
@@ -36,7 +49,8 @@ else
 		$(MAKE) DEBUG=1 all1 debug1
 endif
 
-debug1: etc img/$(APPLICATION)$(MACH_IMGSUFF)
+debug1: FORCE
+		(cd img && $(MKBI) $(word 1, $(APPS)).img $(addprefix $(IMG)/,$(APPS)))
 		(cd img && $(MAKE) DEBUG=1 debug)
 
 flash: FORCE

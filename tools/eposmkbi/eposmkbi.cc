@@ -208,6 +208,10 @@ int main(int argc, char **argv)
     si.bm.space_x  = CONFIG.space_x;
     si.bm.space_y  = CONFIG.space_y;
     si.bm.space_z  = CONFIG.space_z;
+    si.bm.n_apps = argc - 3;
+
+    fprintf(out, "\n\nn_apps: %d\n\n", si.bm.n_apps);
+
     for(unsigned int i = 0; i < 8; i++)
         si.bm.uuid[i]  = CONFIG.uuid[i];
 
@@ -239,7 +243,7 @@ int main(int argc, char **argv)
     }
 
     // Add application(s) and data
-    si.bm.application_offset = image_size - boot_size;
+    si.bm.application_offset[0] = image_size - boot_size;
     fprintf(out, "    Adding application \"%s\":", argv[optind + 2]);
     image_size += put_file(fd_img, argv[optind + 2]);
     if((argc - optind) == 3) // single APP
@@ -248,6 +252,7 @@ int main(int argc, char **argv)
         si.bm.extras_offset = image_size - boot_size;
         struct stat file_stat;
         for(int i = optind + 3; i < argc; i++) {
+            si.bm.application_offset[i-3] = image_size - boot_size;
             fprintf(out, "    Adding file \"%s\":", argv[i]);
             stat(argv[i], &file_stat);
             image_size += put_number(fd_img, file_stat.st_size);
@@ -563,8 +568,13 @@ template<typename T> bool add_boot_map(int fd, System_Info * si)
         return false;
     if(!put_number(fd, static_cast<T>(si->bm.system_offset)))
         return false;
-    if(!put_number(fd, static_cast<T>(si->bm.application_offset)))
+    for(int i=0; i<8; i++){
+        if(!put_number(fd, static_cast<T>(si->bm.application_offset[i])))                 
+            return false;
+    }
+    if(!put_number(fd, static_cast<T>(si->bm.n_apps)))
         return false;
+    
     if(!put_number(fd, static_cast<T>(si->bm.extras_offset)))
         return false;
 
