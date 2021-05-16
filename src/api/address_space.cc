@@ -9,7 +9,7 @@ Address_Space::Address_Space(MMU::Page_Directory * pd) : MMU::Directory(pd)
     db<Address_Space> (TRC) << "Address_Space(pd=" << pd << ") [Directory::pd=" << Directory::pd() << "] => " << this << endl;
 }
 
-Address_Space::Address_Space()
+Address_Space::Address_Space() : MMU::Directory()
 {
     db<Address_Space> (TRC) << "Address_Space() [Directory::pd=" << Directory::pd() << "] => " << this << endl;
 }

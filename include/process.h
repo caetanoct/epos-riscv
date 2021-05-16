@@ -181,6 +181,7 @@ public:
 
         _main = new (SYSTEM) Thread(Thread::Configuration(conf.state, conf.criterion, this, 0), entry, an ...);
     }
+    
     ~Task();
 
     Address_Space * address_space() const { return _as; }

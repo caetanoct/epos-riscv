@@ -48,7 +48,8 @@ public:
             IO  = 0x040, // Memory Mapped I/O (0=memory, 1=I/O)
             EXEC = 0x080,
             SYS = (PRE | RW | EXEC),
-            APP = (PRE | RW | EXEC | USR)
+            APP = (PRE | RW | EXEC | USR),
+            ALL = (PRE | RW | EXEC),
         };
 
     public:

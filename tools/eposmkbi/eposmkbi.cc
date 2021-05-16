@@ -568,7 +568,7 @@ template<typename T> bool add_boot_map(int fd, System_Info * si)
         return false;
     if(!put_number(fd, static_cast<T>(si->bm.system_offset)))
         return false;
-    for(int i=0; i<8; i++){
+    for(int i = 0; i < 6; i++){
         if(!put_number(fd, static_cast<T>(si->bm.application_offset[i])))                 
             return false;
     }
