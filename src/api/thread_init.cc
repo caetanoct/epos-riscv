@@ -31,60 +31,56 @@ void Thread::init()
 
     if(Traits<System>::multitask) {
 
+        int app_extra_size = static_cast<int>(si->lm.app_extra_size);
         char ** app_extra = reinterpret_cast<char **>(si->lm.app_extra);
-
-        Segment * data_segment = new (SYSTEM) Segment(Log_Addr(si->lm.app_data), si->lm.app_data_size, MMU::Page_Flags::APP, true);
-        Segment * code_seg = new (SYSTEM) Segment(Log_Addr(si->lm.app_code), si->lm.app_code_size, MMU::Page_Flags::APP, true);
 
         db<Init>(TRC) << "extra size " << si->lm.app_extra_size << "extra " << app_extra << endl;
 
-        new (SYSTEM) Task(new (SYSTEM) Address_Space(MMU::current()),
-                          code_seg,
-                          data_segment,
-                          main,
-                          Log_Addr(Memory_Map::APP_CODE), Log_Addr(Memory_Map::APP_DATA),
-                          static_cast<int>(si->lm.app_extra_size), app_extra
-                        );
-        
+        new (SYSTEM) Task(
+            new (SYSTEM) Address_Space(MMU::current()),
+            new (SYSTEM) Segment(Log_Addr(si->lm.app_code), si->lm.app_code_size, MMU::Page_Flags::APP, true),
+            new (SYSTEM) Segment(Log_Addr(si->lm.app_data), si->lm.app_data_size, MMU::Page_Flags::APP, true),
+            main,
+            Log_Addr(Memory_Map::APP_CODE), Log_Addr(Memory_Map::APP_DATA),
+            app_extra_size, app_extra);
+
         if(si->lm.has_ext) {
             db<Init>(INF) << "Thread::init: additional data from mkbi at "  << reinterpret_cast<void *>(si->lm.app_extra) << ":" << si->lm.app_extra_size << endl;
             
-            for (unsigned int i = 1; i < si->bm.n_apps; i++) {
+            ELF *extra_elf = reinterpret_cast<ELF *>(si->lm.app_extra + sizeof(int));
+            db<Setup>(TRC) << "App_elf " << extra_elf << endl;
+            
+            if (extra_elf->valid()) {
+                unsigned int extra_app_data = ~0U;
+                unsigned int extra_app_data_size = 0;
+                
+                unsigned int extra_app_code = extra_elf->segment_address(0);
+                unsigned int extra_app_code_size = extra_elf->segment_size(0);
+
+                for (int i = 1; i < extra_elf->segments(); i++) {
+                    if (extra_elf->segment_type(i) != PT_LOAD)
+                        continue;
+                    if (extra_elf->segment_address(i) < extra_app_data)
+                        extra_app_data = extra_elf->segment_address(i);
+
+                    extra_app_data_size += extra_elf->segment_size(i);
+                }
+
+                extra_app_data_size = MMU::align_page(extra_app_data_size);
+                extra_app_data_size += MMU::align_page(Traits<Application>::STACK_SIZE);
+                extra_app_data_size += MMU::align_page(Traits<Application>::HEAP_SIZE);
+
                 new (SYSTEM) Task(
-                    new (SYSTEM) Address_Space,
-                    code_seg,
-                    data_segment,
-                    main,
-                    Log_Addr(Memory_Map::APP_CODE), Log_Addr(Memory_Map::APP_DATA),
-                    static_cast<int>(si->lm.app_extra_size), app_extra
+                    new (SYSTEM) Address_Space(MMU::current()),
+                    new (SYSTEM) Segment(Log_Addr(extra_app_code), extra_app_code_size, Segment::Flags::APP),
+                    new (SYSTEM) Segment(Log_Addr(extra_app_data), extra_app_data_size, Segment::Flags::APP),
+                    reinterpret_cast<Main *>(extra_elf->entry()),
+                    Log_Addr(extra_app_code), Log_Addr(extra_app_data),
+                    static_cast<int>(0), reinterpret_cast<char **>(0)
                 );
                 
-                ELF * extra_elf = reinterpret_cast<ELF *>(&app_extra[si->bm.application_offset[i]]);
-                db<Setup>(TRC) << "App_elf " << extra_elf << endl;
-                
-                
-                if (Traits<Setup>::hysterically_debugged) {
-                    db<Task, Init>(INF) << "Extra::app_elf: " << (void *)extra_elf << endl;
-                    db<Task, Init>(INF) << "Extra::app_elf: " << MMU::Translation(extra_elf) << endl;
-                    db<Task, Init>(INF) << "Extra::app_elf[0]: " << MMU::Translation(extra_elf->segment_address(0)) << endl;
-                    db<Task, Init>(INF) << "Extra::app_elf[0].size: " << extra_elf->segment_size(0) << endl;
-                }
-                if (extra_elf->load_segment(0) < 0) {
-                    db<Task, Init>(ERR) << "Application code segment was corrupted during INIT!" << endl;
-                    Machine::panic();
-                }
-                for (int i = 1; i < extra_elf->segments(); i++) {
-                    if (extra_elf->load_segment(i) < 0) {
-                        db<Task, Init>(ERR) << "Application data segment was corrupted during INIT!" << endl;
-                        Machine::panic();
-                    }
-                }
-
-                Task::current(Thread::self()->_task);
-                Thread::self()->_task->activate();
             }
         }
-
     } else {
         // If EPOS is a library, then adjust the application entry point to __epos_app_entry,
         // which will directly call main(). In this case, _init will already have been called,
